@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Expo
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.orig.*
+
+# Native
+mobile/ios/
+mobile/android/
+
+# Backend build output
+backend/dist/
+backend/build/
+
+# Env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo

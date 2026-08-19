@@ -1,0 +1,23 @@
+{
+  "common": {
+    "appName": "HomiAI",
+    "tagline": "Find it. Understand it. Imagine it. Make it home."
+  },
+  "tabs": {
+    "home": "Home",
+    "explore": "Explore",
+    "saved": "Saved",
+    "ai": "AI",
+    "profile": "Profile"
+  },
+  "home": {
+    "title": "Design system online",
+    "subtitle": "Phase 0 scaffold — tokens, navigation, and i18n are wired up.",
+    "tokensHeading": "Color tokens",
+    "radiiHeading": "Radii",
+    "typeHeading": "Type"
+  },
+  "placeholder": {
+    "comingSoon": "Coming in a later phase."
+  }
+}

@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Location
+//
+// Single self-referential hierarchy (country -> city -> neighborhood, and
+// deeper if a market needs it later — e.g. a state/province level) instead of
+// fixed Country/City/Neighborhood tables. `type` is a free-form string, not
+// an enum, so a new level or a new country/city never requires a migration.
+// Addis Ababa is seed data here, not a code path (see CLAUDE.md §1, §4).
+// ---------------------------------------------------------------------------
+model Location {
+  id       String  @id @default(cuid())
+  name     String
+  type     String // e.g. "country" | "city" | "neighborhood" — open-ended on purpose
+  parentId String?
+  parent   Location? @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children Location[] @relation("LocationHierarchy")
+
+  countryCode String? // ISO 3166-1 alpha-2, set on type="country" rows (e.g. "ET")
+  currency    String? // default currency code for this location, e.g. "ETB" — a seed-time suggestion, never a global constant
+  phoneCode   String? // e.g. "+251", set on type="country" rows
+
+  lat Float?
+  lng Float?
+
+  propertiesAsCountry      Property[] @relation("PropertyCountry")
+  propertiesAsCity         Property[] @relation("PropertyCity")
+  propertiesAsNeighborhood Property[] @relation("PropertyNeighborhood")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([parentId, name])
+  @@index([type])
+}
+
+enum UserRole {
+  BUYER
+  RENTER
+  AGENT
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  email        String?  @unique
+  role         UserRole @default(BUYER)
+
+  agent           Agent?
+  ownedProperties Property[]
+  savedProperties SavedProperty[]
+  savedSearches   SavedSearch[]
+  leads           Lead[]
+  messagesSent    Message[]
+  designs         AIDesign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Agent {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id])
+  businessName String
+  verified     Boolean @default(false)
+  bio          String?
+
+  listings Property[]
+  leads    Lead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  LAND
+  COMMERCIAL
+}
+
+enum PropertyPurpose {
+  BUY
+  RENT
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING
+  VERIFIED
+  REPORTED
+  UNAVAILABLE
+}
+
+model Property {
+  id String @id @default(cuid())
+
+  // Exactly one of agentId / ownerUserId is set — a listing belongs either to
+  // an Agent or directly to an individual User (FSBO), enforced at the
+  // service layer since Prisma has no native polymorphic FK.
+  agentId     String?
+  agent       Agent?  @relation(fields: [agentId], references: [id])
+  ownerUserId String?
+  ownerUser   User?   @relation(fields: [ownerUserId], references: [id])
+
+  type        PropertyType
+  purpose     PropertyPurpose
+  title       String
+  description String
+  price       Decimal
+  currency    String // ISO 4217 code, e.g. "ETB", "USD" — always per-property, never global
+
+  bedrooms  Int?
+  bathrooms Int?
+  areaSqm   Float?
+  furnished Boolean @default(false)
+  parking   Boolean @default(false)
+
+  countryId      String
+  country        Location  @relation("PropertyCountry", fields: [countryId], references: [id])
+  cityId         String
+  city           Location  @relation("PropertyCity", fields: [cityId], references: [id])
+  neighborhoodId String?
+  neighborhood   Location? @relation("PropertyNeighborhood", fields: [neighborhoodId], references: [id])
+  lat            Float?
+  lng            Float?
+
+  amenities String[]
+  photos    String[]
+
+  status PropertyStatus @default(DRAFT)
+
+  savedBy  SavedProperty[]
+  leads    Lead[]
+  messages Message[]
+  designs  AIDesign[]
+  insight  AIInsight?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([cityId])
+  @@index([type, purpose])
+}
+
+model SavedProperty {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model SavedSearch {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  criteria      Json
+  alertsEnabled Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CLOSED
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  agentId    String
+  agent      Agent      @relation(fields: [agentId], references: [id])
+  propertyId String
+  property   Property   @relation(fields: [propertyId], references: [id])
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  status     LeadStatus @default(NEW)
+  createdAt  DateTime   @default(now())
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  threadId    String
+  senderId    String
+  sender      User      @relation(fields: [senderId], references: [id])
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id])
+  body        String
+  attachments String[]
+  createdAt   DateTime  @default(now())
+
+  @@index([threadId])
+}
+
+model AIDesign {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  propertyId     String?
+  property       Property? @relation(fields: [propertyId], references: [id])
+  originalImage  String
+  generatedImage String?
+  roomType       String
+  style          String
+  createdAt      DateTime  @default(now())
+}
+
+model AIInsight {
+  id          String   @id @default(cuid())
+  propertyId  String   @unique
+  property    Property @relation(fields: [propertyId], references: [id])
+  score       Float
+  breakdown   Json // { location, price, space, amenities, condition, investment } — see CLAUDE.md §3
+  confidence  Float
+  generatedAt DateTime @default(now())
+}
