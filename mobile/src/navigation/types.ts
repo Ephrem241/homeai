@@ -43,8 +43,13 @@ export type SavedStackParamList = {
   PropertyAssistant: PropertyAssistantParams;
 };
 
+export type DesignDetailParams = { designId: string };
+
 export type AIStackParamList = {
   AI: undefined;
+  HomeDesigner: undefined;
+  MyDesigns: undefined;
+  DesignDetail: DesignDetailParams;
 };
 
 export type ListingCreateParams = { propertyId?: string } | undefined;

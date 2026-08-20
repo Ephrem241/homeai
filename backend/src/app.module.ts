@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AgentsModule } from './agents/agents.module';
 import { AiModule } from './ai/ai.module';
+import { DesignsModule } from './designs/designs.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { HealthModule } from './health/health.module';
 import { LocationsModule } from './locations/locations.module';
@@ -21,6 +22,7 @@ import { UsersModule } from './users/users.module';
     FavoritesModule,
     AiModule,
     AgentsModule,
+    DesignsModule,
   ],
 })
 export class AppModule {}

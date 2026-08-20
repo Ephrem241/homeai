@@ -48,7 +48,10 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     throw new ApiError();
   }
 
-  return response.json() as Promise<T>;
+  // A successful delete (or any 2xx with no body) has nothing to parse —
+  // response.json() throws on an empty string, so check first.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export function buildQueryString(params: Record<string, string | number | boolean | undefined>) {

@@ -224,3 +224,31 @@ export type UpdatePropertyInput = Partial<{
   amenities: string[];
   photos: string[];
 }>;
+
+export type GeneratedDesign = {
+  imageUrl: string;
+  isPlaceholder: boolean;
+};
+
+export type Design = {
+  id: string;
+  userId: string;
+  propertyId: string | null;
+  originalImage: string;
+  generatedImage: string | null;
+  roomType: string;
+  style: string;
+  createdAt: string;
+};
+
+export type GenerateDesignInput = {
+  originalImage: string;
+  roomType: string;
+  style: string;
+};
+
+export type SaveDesignInput = GenerateDesignInput & {
+  userId: string;
+  generatedImage: string;
+  propertyId?: string;
+};
