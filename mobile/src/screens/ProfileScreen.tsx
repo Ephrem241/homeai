@@ -20,7 +20,9 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-ivory">
       <ScrollView contentContainerClassName="gap-6 px-6 pb-10 pt-4">
-        <Text className="font-sans-bold text-3xl text-charcoal">Profile</Text>
+        <Text accessibilityRole="header" className="font-sans-bold text-3xl text-charcoal">
+          Profile
+        </Text>
 
         <View className="gap-1 rounded-lg border border-mist bg-white p-4">
           <Text className="font-sans-medium text-xs uppercase text-slate-gray">Signed in as</Text>

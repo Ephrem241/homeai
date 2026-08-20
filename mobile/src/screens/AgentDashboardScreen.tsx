@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { PropertyStatus } from '../api/types';
-import { Button, EmptyState } from '../components';
+import { Button, EmptyState, HeaderBar, SkeletonBlock } from '../components';
 import { useAgentDashboardQuery, useAgentListingsQuery, useDemoAgent } from '../hooks/useAgent';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
@@ -34,6 +34,27 @@ function StatTile({ label, value }: { label: string; value: number }) {
   );
 }
 
+function StatTileSkeleton() {
+  return (
+    <View className="flex-1 gap-2 rounded-lg border border-mist bg-white p-3">
+      <SkeletonBlock className="h-6 w-8 rounded-sm" />
+      <SkeletonBlock className="h-3 w-12 rounded-sm" />
+    </View>
+  );
+}
+
+function ListingRowSkeleton() {
+  return (
+    <View className="flex-row items-center justify-between rounded-lg border border-mist bg-white p-3">
+      <View className="flex-1 gap-1.5 pr-3">
+        <SkeletonBlock className="h-4 w-2/3 rounded-sm" />
+        <SkeletonBlock className="h-3 w-1/3 rounded-sm" />
+      </View>
+      <SkeletonBlock className="h-5 w-16 rounded-full" />
+    </View>
+  );
+}
+
 export default function AgentDashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { data: agent } = useDemoAgent();
@@ -42,13 +63,7 @@ export default function AgentDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Agent Dashboard</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Agent Dashboard" />
 
       <ScrollView contentContainerClassName="gap-6 px-6 py-5">
         <Button
@@ -59,7 +74,13 @@ export default function AgentDashboardScreen() {
         />
 
         {dashboard.isLoading ? (
-          <ActivityIndicator color={colors.navy} />
+          <View className="flex-row gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <StatTileSkeleton key={i} />
+            ))}
+          </View>
+        ) : dashboard.isError ? (
+          <Text className="font-sans text-sm text-slate-gray">Couldn't load your stats.</Text>
         ) : dashboard.data ? (
           <View className="flex-row gap-3">
             <StatTile label="Listings" value={dashboard.data.totalListings} />
@@ -70,9 +91,17 @@ export default function AgentDashboardScreen() {
         ) : null}
 
         <View className="gap-3">
-          <Text className="font-sans-semibold text-lg text-charcoal">Your listings</Text>
+          <Text accessibilityRole="header" className="font-sans-semibold text-lg text-charcoal">
+            Your listings
+          </Text>
           {listings.isLoading ? (
-            <ActivityIndicator color={colors.navy} />
+            <View className="gap-2">
+              {[0, 1, 2].map((i) => (
+                <ListingRowSkeleton key={i} />
+              ))}
+            </View>
+          ) : listings.isError ? (
+            <Text className="font-sans text-sm text-slate-gray">Couldn't load your listings.</Text>
           ) : listings.data && listings.data.length > 0 ? (
             <View className="gap-2">
               {listings.data.map((listing) => (
@@ -108,7 +137,9 @@ export default function AgentDashboardScreen() {
         </View>
 
         <View className="gap-3">
-          <Text className="font-sans-semibold text-lg text-charcoal">Recent leads</Text>
+          <Text accessibilityRole="header" className="font-sans-semibold text-lg text-charcoal">
+            Recent leads
+          </Text>
           {dashboard.data && dashboard.data.recentLeads.length > 0 ? (
             <View className="gap-2">
               {dashboard.data.recentLeads.map((lead) => (

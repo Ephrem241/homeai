@@ -1,12 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { SubscriptionTier } from '../api/types';
-import { Button } from '../components';
+import { Button, HeaderBar } from '../components';
 import { useDemoUser, useUpdateTier } from '../hooks/useDemoUser';
-import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
 const TIERS: { tier: SubscriptionTier; name: string; price: string; features: string[] }[] = [
@@ -40,19 +37,12 @@ const TIERS: { tier: SubscriptionTier; name: string; price: string; features: st
 // stub sets the tier directly so the gating built for Investment Analysis
 // and AI Designer generations (Phase 7) can be exercised end to end.
 export default function PricingScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { data: user } = useDemoUser();
   const updateTier = useUpdateTier();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Plans</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Plans" />
 
       <ScrollView contentContainerClassName="gap-4 px-6 py-6">
         {TIERS.map((option) => {

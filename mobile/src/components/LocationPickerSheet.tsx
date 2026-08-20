@@ -1,12 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { LocationSearchResult } from '../api/types';
 import { useLocationSearchQuery } from '../hooks/useLocationSearch';
 import { colors } from '../theme/tokens';
 import BottomSheet from './BottomSheet';
 import SearchBar from './SearchBar';
+import SkeletonBlock from './Skeleton';
+
+function LocationRowSkeleton() {
+  return (
+    <View className="flex-row items-center gap-3 px-2 py-3">
+      <SkeletonBlock className="h-[18px] w-[18px] rounded-full" />
+      <View className="flex-1 gap-1">
+        <SkeletonBlock className="h-4 w-1/2 rounded-sm" />
+        <SkeletonBlock className="h-3 w-1/3 rounded-sm" />
+      </View>
+    </View>
+  );
+}
 
 // Search-driven rather than a browse tree — the same picker works for any
 // country/city/neighborhood in the Location table, never an Ethiopia-specific
@@ -34,8 +47,10 @@ export default function LocationPickerSheet({
         />
 
         {isLoading ? (
-          <View className="items-center py-6">
-            <ActivityIndicator color={colors.navy} />
+          <View className="gap-1">
+            {[0, 1, 2].map((i) => (
+              <LocationRowSkeleton key={i} />
+            ))}
           </View>
         ) : query.trim().length <= 1 ? (
           <Text className="px-1 font-sans text-sm text-slate-gray">

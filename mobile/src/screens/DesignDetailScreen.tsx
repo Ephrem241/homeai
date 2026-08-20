@@ -1,13 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ActivityIndicator, Image, Pressable, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
 
-import { Button, EmptyState } from '../components';
+import { Button, EmptyState, HeaderBar, SkeletonBlock } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useDeleteDesign, useDesignQuery } from '../hooks/useDesigns';
 import type { AIStackParamList } from '../navigation/types';
-import { colors } from '../theme/tokens';
 
 export default function DesignDetailScreen() {
   const route = useRoute<RouteProp<AIStackParamList, 'DesignDetail'>>();
@@ -35,17 +33,16 @@ export default function DesignDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Design</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Design" />
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={colors.navy} />
+        <View className="gap-4 px-6 py-6">
+          <SkeletonBlock className="h-6 w-2/3 rounded-sm" />
+          <SkeletonBlock className="h-4 w-1/3 rounded-sm" />
+          <View className="flex-row gap-3">
+            <SkeletonBlock className="h-48 flex-1 rounded-lg" />
+            <SkeletonBlock className="h-48 flex-1 rounded-lg" />
+          </View>
         </View>
       ) : isError || !design ? (
         <EmptyState

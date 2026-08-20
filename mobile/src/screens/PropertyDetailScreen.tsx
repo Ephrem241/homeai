@@ -15,11 +15,21 @@ import {
   View,
 } from 'react-native';
 
-import { AppModal, Button, EmptyState, InvestmentAnalysisPanel, PriceBadge, PropertyScoreCard, VerificationBadge } from '../components';
+import {
+  AppModal,
+  Button,
+  EmptyState,
+  InvestmentAnalysisPanel,
+  PriceBadge,
+  PropertyScoreCard,
+  SkeletonBlock,
+  VerificationBadge,
+} from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
 import { usePropertyInsightQuery } from '../hooks/usePropertyInsight';
 import { useReportProperty, usePropertyQuery } from '../hooks/useProperties';
+import { useResponsive } from '../hooks/useResponsive';
 import type { ExploreStackParamList, RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
@@ -50,6 +60,9 @@ export default function PropertyDetailScreen() {
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
   const reportProperty = useReportProperty();
+  // CLAUDE.md §5 Phase 8 — a centered reading column on tablet rather than
+  // text stretched edge-to-edge across a wide screen.
+  const { isTablet } = useResponsive();
   const [activePhoto, setActivePhoto] = useState(0);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reported, setReported] = useState(false);
@@ -57,7 +70,13 @@ export default function PropertyDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-ivory">
-        <View className="h-72 bg-mist" />
+        <SkeletonBlock className="h-72 w-full" />
+        <View className="gap-3 px-6 pt-5">
+          <SkeletonBlock className="h-5 w-24 rounded-full" />
+          <SkeletonBlock className="h-7 w-4/5 rounded-sm" />
+          <SkeletonBlock className="h-4 w-1/2 rounded-sm" />
+          <SkeletonBlock className="h-8 w-1/3 rounded-sm" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -141,7 +160,7 @@ export default function PropertyDetailScreen() {
           </Pressable>
         </View>
 
-        <View className="gap-5 px-6 pt-5">
+        <View className="w-full gap-5 self-center px-6 pt-5" style={isTablet ? { maxWidth: 640 } : undefined}>
           <View className="gap-2">
             <View className="flex-row flex-wrap gap-2">
               <VerificationBadge status="verified" />

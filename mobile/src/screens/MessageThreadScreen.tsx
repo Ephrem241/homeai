@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, Text, View } from 'react-native';
 
-import { Input } from '../components';
+import { EmptyState, HeaderBar, Input } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useSendMessageMutation, useThreadMessagesQuery } from '../hooks/useMessages';
 import type { ProfileStackParamList } from '../navigation/types';
@@ -18,7 +17,6 @@ function buildThreadId(userIdA: string, userIdB: string) {
 
 export default function MessageThreadScreen() {
   const route = useRoute<RouteProp<ProfileStackParamList, 'MessageThread'>>();
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { otherUserId, otherUserName, propertyId, propertyTitle } = route.params;
 
   const { data: user } = useDemoUser();
@@ -36,39 +34,45 @@ export default function MessageThreadScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <View className="items-center">
-          <Text className="font-sans-semibold text-lg text-charcoal">{otherUserName}</Text>
-          {propertyTitle ? (
-            <Text numberOfLines={1} className="font-sans text-xs text-slate-gray">
-              {propertyTitle}
-            </Text>
-          ) : null}
-        </View>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title={otherUserName} subtitle={propertyTitle} />
 
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={90}
       >
-        <FlatList
-          data={messages.data ?? []}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="gap-2 px-4 py-4"
-          renderItem={({ item }) => {
-            const isMine = item.senderId === user?.id;
-            return (
-              <View className={`max-w-[80%] rounded-lg px-4 py-2.5 ${isMine ? 'self-end bg-navy' : 'self-start border border-mist bg-white'}`}>
-                <Text className={`font-sans text-sm ${isMine ? 'text-white' : 'text-charcoal'}`}>{item.body}</Text>
-              </View>
-            );
-          }}
-        />
+        {messages.isError ? (
+          <EmptyState
+            icon="alert-circle-outline"
+            title="Something went wrong."
+            message="Please try again."
+            actionLabel="Retry"
+            onAction={() => messages.refetch()}
+          />
+        ) : (
+          <FlatList
+            data={messages.data ?? []}
+            keyExtractor={(item) => item.id}
+            contentContainerClassName="flex-grow gap-2 px-4 py-4"
+            ListEmptyComponent={
+              !messages.isLoading ? (
+                <EmptyState
+                  icon="chatbubble-outline"
+                  title="Say hello."
+                  message={propertyTitle ? `Start the conversation about ${propertyTitle}.` : 'Start the conversation.'}
+                />
+              ) : null
+            }
+            renderItem={({ item }) => {
+              const isMine = item.senderId === user?.id;
+              return (
+                <View className={`max-w-[80%] rounded-lg px-4 py-2.5 ${isMine ? 'self-end bg-navy' : 'self-start border border-mist bg-white'}`}>
+                  <Text className={`font-sans text-sm ${isMine ? 'text-white' : 'text-charcoal'}`}>{item.body}</Text>
+                </View>
+              );
+            }}
+          />
+        )}
 
         <View className="flex-row items-center gap-2 border-t border-mist px-4 py-3">
           <View className="flex-1">

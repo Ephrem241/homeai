@@ -2,14 +2,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQueries } from '@tanstack/react-query';
-import { ActivityIndicator, Image, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { fetchProperty } from '../api/properties';
-import { EmptyState, VerificationBadge } from '../components';
+import { EmptyState, SkeletonBlock, VerificationBadge } from '../components';
 import type { ExploreStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
 const CARD_WIDTH = 260;
+
+function CompareCardSkeleton() {
+  return (
+    <View style={{ width: CARD_WIDTH }} className="rounded-lg border border-mist bg-white">
+      <SkeletonBlock className="h-32 w-full rounded-t-lg" />
+      <View className="gap-2 p-3">
+        <SkeletonBlock className="h-4 w-1/3 rounded-full" />
+        <SkeletonBlock className="h-4 w-3/4 rounded-sm" />
+        {[0, 1, 2, 3, 4].map((i) => (
+          <SkeletonBlock key={i} className="h-3 w-full rounded-sm" />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -38,20 +53,31 @@ export default function CompareScreen() {
   return (
     <SafeAreaView className="flex-1 bg-ivory">
       <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Text className="font-sans-semibold text-lg text-charcoal">Compare ({propertyIds.length})</Text>
-        <Ionicons
-          name="close"
-          size={22}
-          color={colors.charcoal}
+        <Text accessibilityRole="header" className="font-sans-semibold text-lg text-charcoal">
+          Compare ({propertyIds.length})
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close"
           onPress={() => navigation.goBack()}
-          suppressHighlighting
-        />
+          hitSlop={12}
+          android_ripple={{ color: colors.mist, radius: 20 }}
+          className="h-9 w-9 items-center justify-center rounded-full"
+        >
+          <Ionicons name="close" size={22} color={colors.charcoal} />
+        </Pressable>
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={colors.navy} />
-        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-3 px-6 py-4"
+        >
+          {propertyIds.map((id) => (
+            <CompareCardSkeleton key={id} />
+          ))}
+        </ScrollView>
       ) : properties.length === 0 ? (
         <EmptyState icon="alert-circle-outline" title="Couldn't load these properties." message="Please try again." />
       ) : (

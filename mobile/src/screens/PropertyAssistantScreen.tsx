@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, type RouteProp } from '@react-navigation/native';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  Animated,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +17,35 @@ import type { ChatMessage } from '../api/types';
 import { usePropertyChat } from '../hooks/usePropertyChat';
 import type { ExploreStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
+
+function TypingDot({ delay }: { delay: number }) {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 350, delay, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 350, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity, delay]);
+
+  return <Animated.View style={{ opacity }} className="h-1.5 w-1.5 rounded-full bg-slate-gray" />;
+}
+
+function TypingIndicator() {
+  return (
+    <View className="flex-row items-center gap-1 px-6 pb-2">
+      <View className="flex-row items-center gap-1 rounded-lg bg-mist px-4 py-3">
+        <TypingDot delay={0} />
+        <TypingDot delay={150} />
+        <TypingDot delay={300} />
+      </View>
+    </View>
+  );
+}
 
 const SUGGESTED_QUESTIONS = [
   "What's nearby this property?",
@@ -56,7 +85,9 @@ export default function PropertyAssistantScreen() {
     <SafeAreaView className="flex-1 bg-ivory">
       <View className="flex-row items-center gap-2 border-b border-mist px-6 py-4">
         <Ionicons name="sparkles" size={18} color={colors.navy} />
-        <Text className="font-sans-semibold text-lg text-charcoal">Ask about this property</Text>
+        <Text accessibilityRole="header" className="font-sans-semibold text-lg text-charcoal">
+          Ask about this property
+        </Text>
       </View>
 
       <KeyboardAvoidingView
@@ -95,12 +126,7 @@ export default function PropertyAssistantScreen() {
           />
         )}
 
-        {isSending ? (
-          <View className="flex-row items-center gap-2 px-6 pb-2">
-            <ActivityIndicator size="small" color={colors.navy} />
-            <Text className="font-sans text-xs text-slate-gray">Thinking…</Text>
-          </View>
-        ) : null}
+        {isSending ? <TypingIndicator /> : null}
 
         <View className="flex-row items-end gap-2 border-t border-mist bg-white px-4 py-3">
           <TextInput

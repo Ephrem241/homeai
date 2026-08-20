@@ -91,7 +91,9 @@ export default function HomeScreen() {
     <SafeAreaView className="flex-1 bg-ivory">
       <ScrollView className="flex-1" contentContainerClassName="gap-8 pb-10">
         <View className="gap-1 px-6 pt-4">
-          <Text className="font-sans-bold text-3xl text-charcoal">{t('common.appName')}</Text>
+          <Text accessibilityRole="header" className="font-sans-bold text-3xl text-charcoal">
+            {t('common.appName')}
+          </Text>
           <Text className="font-sans text-base text-slate-gray">{t('common.tagline')}</Text>
         </View>
 

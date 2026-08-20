@@ -1,11 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { AdminAgent, AdminProperty, AdminUser } from '../api/types';
-import { Button, EmptyState, FilterChip, VerificationBadge } from '../components';
+import { Button, EmptyState, FilterChip, HeaderBar, SkeletonBlock, VerificationBadge } from '../components';
 import {
   useAdminAgentsQuery,
   useAdminOverviewQuery,
@@ -14,8 +11,6 @@ import {
   useUpdatePropertyStatusMutation,
   useVerifyAgentMutation,
 } from '../hooks/useAdmin';
-import type { ProfileStackParamList } from '../navigation/types';
-import { colors } from '../theme/tokens';
 
 type Section = 'overview' | 'queue' | 'reports' | 'users' | 'agents';
 
@@ -33,6 +28,36 @@ function StatTile({ label, value }: { label: string; value: number }) {
       <Text className="font-sans-bold text-2xl text-charcoal">{value}</Text>
       <Text className="font-sans text-xs text-slate-gray">{label}</Text>
     </View>
+  );
+}
+
+function StatTileSkeleton() {
+  return (
+    <View className="min-w-[45%] flex-1 gap-2 rounded-lg border border-mist bg-white p-3">
+      <SkeletonBlock className="h-6 w-10 rounded-sm" />
+      <SkeletonBlock className="h-3 w-16 rounded-sm" />
+    </View>
+  );
+}
+
+function RowSkeleton() {
+  return (
+    <View className="gap-2 rounded-lg border border-mist bg-white p-3">
+      <SkeletonBlock className="h-4 w-2/3 rounded-sm" />
+      <SkeletonBlock className="h-3 w-1/2 rounded-sm" />
+    </View>
+  );
+}
+
+function SectionError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <EmptyState
+      icon="alert-circle-outline"
+      title="Something went wrong."
+      message="Please try again."
+      actionLabel="Retry"
+      onAction={onRetry}
+    />
   );
 }
 
@@ -66,7 +91,6 @@ function PropertyRow({
 // CLAUDE.md §1) — reachable from Profile for now so the verification queue
 // built in Phase 7 can be exercised end to end against the real endpoints.
 export default function AdminDashboardScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const [section, setSection] = useState<Section>('overview');
 
   const overview = useAdminOverviewQuery();
@@ -79,13 +103,7 @@ export default function AdminDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Admin Dashboard</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Admin Dashboard" />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 px-6 py-4">
         {SECTIONS.map((option) => (
@@ -100,8 +118,14 @@ export default function AdminDashboardScreen() {
 
       <ScrollView contentContainerClassName="gap-4 px-6 pb-10">
         {section === 'overview' ? (
-          overview.isLoading || !overview.data ? (
-            <ActivityIndicator color={colors.navy} />
+          overview.isLoading ? (
+            <View className="flex-row flex-wrap gap-3">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <StatTileSkeleton key={i} />
+              ))}
+            </View>
+          ) : overview.isError || !overview.data ? (
+            <SectionError onRetry={() => overview.refetch()} />
           ) : (
             <>
               <View className="flex-row flex-wrap gap-3">
@@ -127,7 +151,13 @@ export default function AdminDashboardScreen() {
 
         {section === 'queue' ? (
           pending.isLoading ? (
-            <ActivityIndicator color={colors.navy} />
+            <View className="gap-3">
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          ) : pending.isError ? (
+            <SectionError onRetry={() => pending.refetch()} />
           ) : pending.data && pending.data.length > 0 ? (
             pending.data.map((property) => (
               <PropertyRow
@@ -154,7 +184,13 @@ export default function AdminDashboardScreen() {
 
         {section === 'reports' ? (
           reported.isLoading ? (
-            <ActivityIndicator color={colors.navy} />
+            <View className="gap-3">
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          ) : reported.isError ? (
+            <SectionError onRetry={() => reported.refetch()} />
           ) : reported.data && reported.data.length > 0 ? (
             reported.data.map((property) => (
               <PropertyRow
@@ -181,7 +217,13 @@ export default function AdminDashboardScreen() {
 
         {section === 'users' ? (
           users.isLoading ? (
-            <ActivityIndicator color={colors.navy} />
+            <View className="gap-3">
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          ) : users.isError ? (
+            <SectionError onRetry={() => users.refetch()} />
           ) : (
             (users.data ?? []).map((item: AdminUser) => (
               <View key={item.id} className="gap-1 rounded-lg border border-mist bg-white p-3">
@@ -201,7 +243,13 @@ export default function AdminDashboardScreen() {
 
         {section === 'agents' ? (
           agents.isLoading ? (
-            <ActivityIndicator color={colors.navy} />
+            <View className="gap-3">
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          ) : agents.isError ? (
+            <SectionError onRetry={() => agents.refetch()} />
           ) : (
             (agents.data ?? []).map((agent: AdminAgent) => (
               <View key={agent.id} className="gap-2 rounded-lg border border-mist bg-white p-3">

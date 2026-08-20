@@ -19,6 +19,7 @@ import type { FiltersValue } from '../components/FiltersSheet';
 import type { LocationSearchResult, PropertyFilters, PropertyListItem, PropertyType } from '../api/types';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
 import { usePropertiesQuery } from '../hooks/useProperties';
+import { useResponsive } from '../hooks/useResponsive';
 import type { ExploreStackParamList, SearchResultsParams } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
@@ -96,6 +97,8 @@ export default function SearchResultsScreen() {
   const { data, isLoading, isError, isRefetching, refetch } = usePropertiesQuery(queryFilters);
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
+  // CLAUDE.md §5 Phase 8 — tablet gets a grid, not a single stretched column.
+  const { columns } = useResponsive();
 
   const hasActiveFilters = Boolean(
     filters.type ||
@@ -149,7 +152,7 @@ export default function SearchResultsScreen() {
   function renderItem({ item }: { item: PropertyListItem }) {
     const selected = selectedIds.has(item.id);
     return (
-      <View className="px-6 pb-4">
+      <View className={columns > 1 ? 'flex-1 pb-4' : 'px-6 pb-4'}>
         <View className={compareMode && selected ? 'rounded-lg border-2 border-navy' : ''}>
           <PropertyCard
             title={item.title}
@@ -199,7 +202,12 @@ export default function SearchResultsScreen() {
             <Text className="flex-1 font-sans text-xs text-slate-gray">
               We couldn't match a location for "{unresolvedLocation}" — showing everything else.
             </Text>
-            <Pressable accessibilityRole="button" onPress={() => setUnresolvedLocation(undefined)} hitSlop={8}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss"
+              onPress={() => setUnresolvedLocation(undefined)}
+              hitSlop={12}
+            >
               <Ionicons name="close" size={16} color={colors.slateGray} />
             </Pressable>
           </View>
@@ -272,9 +280,12 @@ export default function SearchResultsScreen() {
         />
       ) : data.data.length > 0 ? (
         <FlatList
+          key={columns}
           data={data.data}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          numColumns={columns}
+          columnWrapperStyle={columns > 1 ? { gap: 16, paddingHorizontal: 24 } : undefined}
           contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           ListHeaderComponent={

@@ -8,6 +8,7 @@ export { default as EmptyState } from './EmptyState';
 export { default as FilterChip } from './FilterChip';
 export { default as FiltersSheet } from './FiltersSheet';
 export type { FiltersValue } from './FiltersSheet';
+export { default as HeaderBar } from './HeaderBar';
 export { default as Input } from './Input';
 export { default as InvestmentAnalysisPanel } from './InvestmentAnalysisPanel';
 export { default as LocationCard, LocationCardSkeleton } from './LocationCard';

@@ -18,7 +18,9 @@ export default function AIScreen() {
     <SafeAreaView className="flex-1 bg-ivory">
       <ScrollView contentContainerClassName="gap-6 px-6 pb-10 pt-4">
         <View className="gap-1">
-          <Text className="font-sans-bold text-3xl text-charcoal">AI Home Designer</Text>
+          <Text accessibilityRole="header" className="font-sans-bold text-3xl text-charcoal">
+            AI Home Designer
+          </Text>
           <Text className="font-sans text-base text-slate-gray">
             Upload a room photo and see it redesigned in a new style.
           </Text>

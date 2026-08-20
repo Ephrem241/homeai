@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { PropertyPurpose, PropertyType, UpdatePropertyInput } from '../api/types';
-import { Button, FilterChip, Input, LocationPickerSheet, SegmentedTabs } from '../components';
+import { Button, FilterChip, HeaderBar, Input, LocationPickerSheet, SegmentedTabs, SkeletonBlock } from '../components';
 import { useDemoAgent } from '../hooks/useAgent';
 import {
   useCreateProperty,
@@ -169,8 +169,15 @@ export default function ListingCreateScreen() {
 
   if (resumeId && existing.isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-ivory">
-        <ActivityIndicator color={colors.navy} />
+      <SafeAreaView className="flex-1 bg-ivory">
+        <HeaderBar title="Loading listing…" onBack={() => navigation.goBack()} />
+        <View className="h-1 bg-mist" />
+        <View className="gap-4 px-6 py-6">
+          <SkeletonBlock className="h-6 w-1/2 rounded-sm" />
+          <SkeletonBlock className="h-12 w-full rounded-md" />
+          <SkeletonBlock className="h-12 w-full rounded-md" />
+          <SkeletonBlock className="h-12 w-2/3 rounded-md" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -518,15 +525,7 @@ export default function ListingCreateScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={handleBack} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-base text-charcoal">
-          Step {step + 1} of {STEP_TITLES.length}
-        </Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title={`Step ${step + 1} of ${STEP_TITLES.length}`} onBack={handleBack} />
 
       <View className="h-1 bg-mist">
         <View className="h-1 bg-navy" style={{ width: `${((step + 1) / STEP_TITLES.length) * 100}%` }} />

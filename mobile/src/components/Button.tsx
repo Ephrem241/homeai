@@ -33,6 +33,12 @@ const VARIANT_SPINNER_COLOR: Record<ButtonVariant, string> = {
   premium: colors.charcoal,
 };
 
+const VARIANT_RIPPLE_COLOR: Record<ButtonVariant, string> = {
+  primary: 'rgba(255,255,255,0.25)',
+  secondary: 'rgba(11,31,51,0.15)',
+  premium: 'rgba(23,33,43,0.15)',
+};
+
 export default function Button({
   label,
   onPress,
@@ -49,6 +55,9 @@ export default function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       onPress={isDisabled ? undefined : onPress}
+      // Android convention is a ripple; iOS uses the opacity dip below —
+      // CLAUDE.md §5 Phase 8 platform-specific polish.
+      android_ripple={isDisabled ? undefined : { color: VARIANT_RIPPLE_COLOR[variant] }}
       className={`flex-row items-center justify-center gap-2 rounded-md px-5 py-3.5 ${VARIANT_CLASSNAMES[variant]} ${fullWidth ? 'w-full' : ''}`}
       style={({ pressed }) => ({ opacity: isDisabled ? 0.4 : pressed ? 0.8 : 1 })}
     >

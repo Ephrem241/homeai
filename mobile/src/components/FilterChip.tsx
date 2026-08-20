@@ -19,6 +19,7 @@ export default function FilterChip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
+      android_ripple={{ color: selected ? 'rgba(255,255,255,0.25)' : colors.mist }}
       className={`flex-row items-center gap-1.5 self-start rounded-full border px-4 py-2 ${
         selected ? 'border-navy bg-navy' : 'border-mist bg-white'
       }`}

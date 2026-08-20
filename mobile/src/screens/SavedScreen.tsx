@@ -4,17 +4,22 @@ import { FlatList, RefreshControl, SafeAreaView, Text, View } from 'react-native
 
 import { EmptyState, PropertyCard, PropertyCardSkeleton } from '../components';
 import { useFavoritesQuery, useToggleFavorite } from '../hooks/useFavorites';
+import { useResponsive } from '../hooks/useResponsive';
 import type { SavedStackParamList } from '../navigation/types';
 
 export default function SavedScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SavedStackParamList>>();
   const { data, isLoading, isError, isRefetching, refetch } = useFavoritesQuery();
   const toggleFavorite = useToggleFavorite();
+  // CLAUDE.md §5 Phase 8 — tablet gets a grid, not a single stretched column.
+  const { columns } = useResponsive();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
       <View className="px-6 pb-2 pt-4">
-        <Text className="font-sans-bold text-3xl text-charcoal">Saved</Text>
+        <Text accessibilityRole="header" className="font-sans-bold text-3xl text-charcoal">
+          Saved
+        </Text>
       </View>
 
       {isLoading ? (
@@ -33,12 +38,15 @@ export default function SavedScreen() {
         />
       ) : data.length > 0 ? (
         <FlatList
+          key={columns}
           data={data}
           keyExtractor={(item) => item.id}
+          numColumns={columns}
+          columnWrapperStyle={columns > 1 ? { gap: 16, paddingHorizontal: 24 } : undefined}
           contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           renderItem={({ item }) => (
-            <View className="px-6 pb-4">
+            <View className={columns > 1 ? 'flex-1 pb-4' : 'px-6 pb-4'}>
               <PropertyCard
                 title={item.title}
                 location={item.neighborhood ? `${item.neighborhood}, ${item.city}` : item.city}

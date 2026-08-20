@@ -1,36 +1,64 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, Image, Pressable, SafeAreaView, Text, View } from 'react-native';
 
-import { EmptyState } from '../components';
+import { EmptyState, HeaderBar, SkeletonBlock } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useMyDesignsQuery } from '../hooks/useDesigns';
+import { useResponsive } from '../hooks/useResponsive';
 import type { AIStackParamList } from '../navigation/types';
-import { colors } from '../theme/tokens';
 
 const COLUMN_GAP = 12;
+
+function DesignTileSkeleton() {
+  return (
+    <View className="flex-1 overflow-hidden rounded-lg border border-mist bg-white">
+      <SkeletonBlock className="h-32 w-full" />
+      <View className="gap-1 p-2.5">
+        <SkeletonBlock className="h-3 w-2/3 rounded-sm" />
+        <SkeletonBlock className="h-3 w-1/2 rounded-sm" />
+      </View>
+    </View>
+  );
+}
 
 export default function MyDesignsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AIStackParamList>>();
   const { data: user } = useDemoUser();
   const designs = useMyDesignsQuery(user?.id);
+  // CLAUDE.md §5 Phase 8 — tablet gets an extra column rather than the same
+  // two-up grid just stretched wider.
+  const { isTablet } = useResponsive();
+  const numColumns = isTablet ? 3 : 2;
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">My Designs</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="My Designs" />
 
-      {designs.data && designs.data.length > 0 ? (
+      {designs.isLoading ? (
         <FlatList
+          key={numColumns}
+          data={[0, 1, 2, 3]}
+          keyExtractor={(i) => String(i)}
+          numColumns={numColumns}
+          contentContainerStyle={{ padding: 24, gap: COLUMN_GAP }}
+          columnWrapperStyle={{ gap: COLUMN_GAP }}
+          renderItem={() => <DesignTileSkeleton />}
+        />
+      ) : designs.isError ? (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Something went wrong."
+          message="Please try again."
+          actionLabel="Retry"
+          onAction={() => designs.refetch()}
+        />
+      ) : designs.data && designs.data.length > 0 ? (
+        <FlatList
+          key={numColumns}
           data={designs.data}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          numColumns={numColumns}
           contentContainerStyle={{ padding: 24, gap: COLUMN_GAP }}
           columnWrapperStyle={{ gap: COLUMN_GAP }}
           renderItem={({ item }) => (

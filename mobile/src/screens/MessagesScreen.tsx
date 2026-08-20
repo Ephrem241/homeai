@@ -1,13 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ActivityIndicator, FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
 
-import { EmptyState } from '../components';
+import { EmptyState, HeaderBar, SkeletonBlock } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useThreadsQuery } from '../hooks/useMessages';
 import type { ProfileStackParamList } from '../navigation/types';
-import { colors } from '../theme/tokens';
+
+function ThreadRowSkeleton() {
+  return (
+    <View className="gap-2 rounded-lg border border-mist bg-white p-4">
+      <SkeletonBlock className="h-4 w-2/5 rounded-sm" />
+      <SkeletonBlock className="h-3 w-3/5 rounded-sm" />
+    </View>
+  );
+}
 
 export default function MessagesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
@@ -16,18 +23,22 @@ export default function MessagesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Messages</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Messages" />
 
       {threads.isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={colors.navy} />
+        <View className="gap-2 px-6 py-4">
+          {[0, 1, 2].map((i) => (
+            <ThreadRowSkeleton key={i} />
+          ))}
         </View>
+      ) : threads.isError ? (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Something went wrong."
+          message="Please try again."
+          actionLabel="Retry"
+          onAction={() => threads.refetch()}
+        />
       ) : (
         <FlatList
           data={threads.data ?? []}

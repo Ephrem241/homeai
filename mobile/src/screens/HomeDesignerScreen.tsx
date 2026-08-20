@@ -4,10 +4,10 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Image, Pressable, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
 
 import type { GeneratedDesign } from '../api/types';
-import { Button, FilterChip, Input } from '../components';
+import { Button, FilterChip, HeaderBar, Input, SkeletonBlock } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useGenerateDesign, useSaveDesign } from '../hooks/useDesigns';
 import type { AIStackParamList, RootTabParamList } from '../navigation/types';
@@ -106,13 +106,7 @@ export default function HomeDesignerScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
-      <View className="flex-row items-center justify-between border-b border-mist px-6 py-4">
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.charcoal} />
-        </Pressable>
-        <Text className="font-sans-semibold text-lg text-charcoal">Home Designer</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <HeaderBar title="Home Designer" />
 
       <ScrollView contentContainerClassName="gap-6 px-6 py-6">
         <View className="gap-2">
@@ -171,6 +165,20 @@ export default function HomeDesignerScreen() {
         ) : null}
 
         {error ? <Text className="font-sans text-sm text-error">{error}</Text> : null}
+
+        {generateMutation.isPending ? (
+          <View className="flex-row gap-3">
+            <View className="flex-1 gap-1.5">
+              <Text className="font-sans-medium text-xs uppercase text-slate-gray">Before</Text>
+              <Image source={{ uri: originalImage.trim() }} className="h-40 w-full rounded-lg bg-mist" resizeMode="cover" />
+            </View>
+            <View className="flex-1 gap-1.5">
+              <Text className="font-sans-medium text-xs uppercase text-slate-gray">After</Text>
+              <SkeletonBlock className="h-40 w-full rounded-lg" />
+              <Text className="font-sans text-xs text-slate-gray">Generating your {style?.toLowerCase()} redesign…</Text>
+            </View>
+          </View>
+        ) : null}
 
         {gateInfo ? (
           <View className="gap-3 rounded-lg border border-gold/40 bg-white p-4">
