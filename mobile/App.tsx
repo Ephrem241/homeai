@@ -23,11 +23,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from './src/hooks/useAuth';
+import { configurePurchases } from './src/lib/purchases';
 import AuthStack from './src/navigation/AuthStack';
 import RootNavigator from './src/navigation/RootNavigator';
 import { colors } from './src/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
+configurePurchases();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },

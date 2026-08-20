@@ -5,6 +5,7 @@ import { fetchMe, verifyOtp as verifyOtpApi } from '../api/auth';
 import { setAuthToken, setUnauthorizedHandler } from '../api/client';
 import type { AuthUser } from '../api/types';
 import { deleteSecureItem, getSecureItem, setSecureItem } from '../lib/secureStorage';
+import { loginToPurchases, logoutFromPurchases } from '../lib/purchases';
 
 const TOKEN_KEY = 'homiai_auth_token';
 
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(null);
     setUser(null);
     queryClient.clear();
+    await logoutFromPurchases().catch(() => {});
   }
 
   // A 401 from any request (expired/invalid token) drops the session the
@@ -54,7 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setAuthToken(token);
       try {
-        setUser(await fetchMe());
+        const me = await fetchMe();
+        setUser(me);
+        await loginToPurchases(me.id).catch(() => {});
       } catch {
         await deleteSecureItem(TOKEN_KEY);
         setAuthToken(null);
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setSecureItem(TOKEN_KEY, token);
     setAuthToken(token);
     setUser(loggedInUser);
+    await loginToPurchases(loggedInUser.id).catch(() => {});
   }
 
   async function refreshUser() {
