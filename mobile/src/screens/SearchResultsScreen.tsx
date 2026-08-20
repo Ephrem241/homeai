@@ -10,6 +10,7 @@ import {
   FilterChip,
   FiltersSheet,
   LocationPickerSheet,
+  PriceMapView,
   PropertyCard,
   PropertyCardSkeleton,
   SearchBar,
@@ -22,6 +23,10 @@ import { usePropertiesQuery } from '../hooks/useProperties';
 import { useResponsive } from '../hooks/useResponsive';
 import type { ExploreStackParamList, SearchResultsParams } from '../navigation/types';
 import { colors } from '../theme/tokens';
+
+// No Mapbox token configured — the map tab falls back to a plain-language
+// placeholder instead of a real (empty/broken) map (CLAUDE.md §4).
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 
 const QUICK_TYPES: { label: string; value: PropertyType; icon: keyof typeof Ionicons.glyphMap }[] = [
   { label: 'Apartment', value: 'APARTMENT', icon: 'business-outline' },
@@ -250,18 +255,34 @@ export default function SearchResultsScreen() {
       </View>
 
       {viewMode === 'map' ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <View className="h-14 w-14 items-center justify-center rounded-full bg-mist">
-            <Ionicons name="map-outline" size={24} color={colors.slateGray} />
+        MAPBOX_TOKEN ? (
+          <PriceMapView
+            accessToken={MAPBOX_TOKEN}
+            markers={(data?.data ?? [])
+              .filter((property): property is PropertyListItem & { lat: number; lng: number } =>
+                property.lat !== null && property.lng !== null,
+              )
+              .map((property) => ({
+                id: property.id,
+                lat: property.lat,
+                lng: property.lng,
+                label: `${property.currency} ${new Intl.NumberFormat('en-US').format(property.price)}${property.purpose === 'RENT' ? '/mo' : ''}`,
+              }))}
+            onSelectProperty={(id) => navigation.navigate('PropertyDetail', { propertyId: id })}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center px-8">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-mist">
+              <Ionicons name="map-outline" size={24} color={colors.slateGray} />
+            </View>
+            <Text className="mt-3 text-center font-sans-semibold text-base text-charcoal">
+              Map view isn't configured yet.
+            </Text>
+            <Text className="mt-1 text-center font-sans text-sm text-slate-gray">
+              Set EXPO_PUBLIC_MAPBOX_TOKEN to enable price-marker map browsing. Use list view for now.
+            </Text>
           </View>
-          <Text className="mt-3 text-center font-sans-semibold text-base text-charcoal">
-            Map view is on its way.
-          </Text>
-          <Text className="mt-1 text-center font-sans text-sm text-slate-gray">
-            Price-marker map browsing arrives once the app is running on a full device build. Use list
-            view for now.
-          </Text>
-        </View>
+        )
       ) : isLoading ? (
         <View className="gap-4 px-6 pt-2">
           {[0, 1, 2].map((i) => (

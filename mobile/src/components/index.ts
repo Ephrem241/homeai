@@ -14,6 +14,8 @@ export { default as InvestmentAnalysisPanel } from './InvestmentAnalysisPanel';
 export { default as LocationCard, LocationCardSkeleton } from './LocationCard';
 export { default as LocationPickerSheet } from './LocationPickerSheet';
 export { default as PriceBadge } from './PriceBadge';
+export { default as PriceMapView } from './PriceMapView';
+export type { MapMarker } from './mapHtml';
 export { default as PropertyScoreCard } from './PropertyScoreCard';
 export { default as PropertyCard, PropertyCardSkeleton } from './PropertyCard';
 export type { PropertyCardProps } from './PropertyCard';
