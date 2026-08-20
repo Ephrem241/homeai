@@ -25,7 +25,7 @@ import {
   SkeletonBlock,
   VerificationBadge,
 } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
+import { useAuth } from '../hooks/useAuth';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
 import { usePropertyInsightQuery } from '../hooks/usePropertyInsight';
 import { useReportProperty, usePropertyQuery } from '../hooks/useProperties';
@@ -54,9 +54,9 @@ export default function PropertyDetailScreen() {
   const navigation = useNavigation<PropertyDetailNavigationProp>();
   const { propertyId } = route.params;
 
-  const { data: user } = useDemoUser();
+  const { user } = useAuth();
   const { data: property, isLoading, isError, refetch } = usePropertyQuery(propertyId);
-  const insight = usePropertyInsightQuery(propertyId, user?.id);
+  const insight = usePropertyInsightQuery(propertyId);
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
   const reportProperty = useReportProperty();

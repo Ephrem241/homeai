@@ -1,4 +1,4 @@
-import { apiRequest, buildQueryString } from './client';
+import { apiRequest } from './client';
 import type { Design, GenerateDesignInput, GeneratedDesign, SaveDesignInput } from './types';
 
 export function generateDesignPreview(input: GenerateDesignInput) {
@@ -15,14 +15,14 @@ export function saveDesign(input: SaveDesignInput) {
   });
 }
 
-export function fetchMyDesigns(userId: string) {
-  return apiRequest<Design[]>(`/designs${buildQueryString({ userId })}`);
+export function fetchMyDesigns() {
+  return apiRequest<Design[]>('/designs');
 }
 
-export function fetchDesign(id: string, userId: string) {
-  return apiRequest<Design>(`/designs/${id}${buildQueryString({ userId })}`);
+export function fetchDesign(id: string) {
+  return apiRequest<Design>(`/designs/${id}`);
 }
 
-export function deleteDesign(id: string, userId: string) {
-  return apiRequest<void>(`/designs/${id}${buildQueryString({ userId })}`, { method: 'DELETE' });
+export function deleteDesign(id: string) {
+  return apiRequest<void>(`/designs/${id}`, { method: 'DELETE' });
 }

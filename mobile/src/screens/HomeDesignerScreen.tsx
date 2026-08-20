@@ -8,7 +8,6 @@ import { Image, SafeAreaView, ScrollView, Share, Text, View } from 'react-native
 
 import type { GeneratedDesign } from '../api/types';
 import { Button, FilterChip, HeaderBar, Input, SkeletonBlock } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
 import { useGenerateDesign, useSaveDesign } from '../hooks/useDesigns';
 import type { AIStackParamList, RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
@@ -30,7 +29,6 @@ function SectionLabel({ children }: { children: string }) {
 // until the agent/user explicitly saves the generated preview.
 export default function HomeDesignerScreen() {
   const navigation = useNavigation<HomeDesignerNavigationProp>();
-  const { data: user } = useDemoUser();
   const generateMutation = useGenerateDesign();
   const saveMutation = useSaveDesign();
 
@@ -49,7 +47,6 @@ export default function HomeDesignerScreen() {
     setGateInfo(null);
     try {
       const generated = await generateMutation.mutateAsync({
-        userId: user?.id,
         originalImage: originalImage.trim(),
         roomType: roomType as string,
         style: style as string,
@@ -67,11 +64,10 @@ export default function HomeDesignerScreen() {
   }
 
   async function handleSave() {
-    if (!result || !user) return;
+    if (!result) return;
     setError(null);
     try {
       await saveMutation.mutateAsync({
-        userId: user.id,
         originalImage: originalImage.trim(),
         generatedImage: result.imageUrl,
         roomType: roomType as string,

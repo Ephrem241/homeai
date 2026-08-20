@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -188,15 +188,32 @@ export class PropertiesService {
     return this.toDetailItem(property);
   }
 
+  // Ownership check shared by every mutation below — an agent may only
+  // touch their own listings (agentId resolved server-side from the caller's
+  // token, never trusted from the request body).
+  private async assertOwnership(id: string, agentId: string) {
+    const existing = await this.prisma.property.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Property not found');
+    }
+    if (existing.agentId !== agentId) {
+      throw new ForbiddenException('Not your listing');
+    }
+    return existing;
+  }
+
   // Creates the row as soon as the minimum the schema requires is known
   // (type/purpose/location) — title/description/price start as placeholders
   // and get filled in by update() as the agent moves through the listing
   // wizard's remaining steps (CLAUDE.md §5 Phase 5 "save as draft at each
-  // step"). Never publicly visible: status starts DRAFT.
-  async create(dto: CreatePropertyDto) {
+  // step"). Never publicly visible: status starts DRAFT. agentId comes from
+  // the caller's own agent profile (resolved in the controller), never from
+  // the request body — otherwise any signed-in user could create listings
+  // under someone else's agency.
+  async create(agentId: string, dto: CreatePropertyDto) {
     const property = await this.prisma.property.create({
       data: {
-        agentId: dto.agentId,
+        agentId,
         type: dto.type,
         purpose: dto.purpose,
         countryId: dto.countryId,
@@ -213,11 +230,8 @@ export class PropertiesService {
     return this.toDetailItem(property);
   }
 
-  async update(id: string, dto: UpdatePropertyDto) {
-    const existing = await this.prisma.property.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Property not found');
-    }
+  async update(id: string, agentId: string, dto: UpdatePropertyDto) {
+    await this.assertOwnership(id, agentId);
 
     const property = await this.prisma.property.update({
       where: { id },
@@ -247,11 +261,8 @@ export class PropertiesService {
   // Draft -> pending verification (CLAUDE.md §5 Phase 5 "done when" —
   // publishing never jumps straight to VERIFIED; that's the admin queue
   // built in Phase 7).
-  async publish(id: string) {
-    const existing = await this.prisma.property.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Property not found');
-    }
+  async publish(id: string, agentId: string) {
+    const existing = await this.assertOwnership(id, agentId);
     if (existing.status !== 'DRAFT') {
       throw new BadRequestException('Only draft listings can be published');
     }

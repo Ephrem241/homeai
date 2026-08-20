@@ -2,9 +2,6 @@ import { PropertyPurpose, PropertyType } from '@prisma/client';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreatePropertyDto {
-  @IsString()
-  agentId!: string;
-
   @IsEnum(PropertyType)
   type!: PropertyType;
 

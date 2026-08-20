@@ -28,8 +28,8 @@ export class DesignsService {
   // A generation is only a preview — nothing is written to the database
   // (and so nothing appears in "My Designs") until the user explicitly
   // saves it, per CLAUDE.md §5 Phase 6's generate -> compare -> save flow.
-  async generatePreview(dto: GenerateDesignDto): Promise<GeneratePreviewResult> {
-    const limitCheck = await this.checkDesignLimit(dto.userId);
+  async generatePreview(userId: string, dto: GenerateDesignDto): Promise<GeneratePreviewResult> {
+    const limitCheck = await this.checkDesignLimit(userId);
     if (!limitCheck.allowed) {
       return { imageUrl: '', isPlaceholder: false, gated: true, limit: limitCheck.limit, used: limitCheck.used };
     }
@@ -38,9 +38,7 @@ export class DesignsService {
     return { ...result, gated: false };
   }
 
-  private async checkDesignLimit(userId?: string): Promise<{ allowed: boolean; limit?: number; used?: number }> {
-    if (!userId) return { allowed: true };
-
+  private async checkDesignLimit(userId: string): Promise<{ allowed: boolean; limit?: number; used?: number }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { subscriptionTier: true } });
     if (!user || user.subscriptionTier !== 'FREE') return { allowed: true };
 
@@ -52,10 +50,10 @@ export class DesignsService {
     return { allowed: used < FREE_TIER_MONTHLY_DESIGN_LIMIT, limit: FREE_TIER_MONTHLY_DESIGN_LIMIT, used };
   }
 
-  saveDesign(dto: SaveDesignDto) {
+  saveDesign(userId: string, dto: SaveDesignDto) {
     return this.prisma.aIDesign.create({
       data: {
-        userId: dto.userId,
+        userId,
         propertyId: dto.propertyId,
         originalImage: dto.originalImage,
         generatedImage: dto.generatedImage,

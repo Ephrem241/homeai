@@ -64,11 +64,17 @@ export type MessageThreadParams = {
 export type ProfileStackParamList = {
   Profile: undefined;
   AgentDashboard: undefined;
+  BecomeAgent: undefined;
   ListingCreate: ListingCreateParams;
   AdminDashboard: undefined;
   Pricing: undefined;
   Messages: undefined;
   MessageThread: MessageThreadParams;
+};
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Otp: { phone: string };
 };
 
 export type RootTabParamList = {

@@ -3,7 +3,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, Image, Pressable, SafeAreaView, Text, View } from 'react-native';
 
 import { EmptyState, HeaderBar, SkeletonBlock } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
 import { useMyDesignsQuery } from '../hooks/useDesigns';
 import { useResponsive } from '../hooks/useResponsive';
 import type { AIStackParamList } from '../navigation/types';
@@ -24,8 +23,7 @@ function DesignTileSkeleton() {
 
 export default function MyDesignsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AIStackParamList>>();
-  const { data: user } = useDemoUser();
-  const designs = useMyDesignsQuery(user?.id);
+  const designs = useMyDesignsQuery();
   // CLAUDE.md §5 Phase 8 — tablet gets an extra column rather than the same
   // two-up grid just stretched wider.
   const { isTablet } = useResponsive();

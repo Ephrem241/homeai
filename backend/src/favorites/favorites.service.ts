@@ -41,7 +41,7 @@ export class FavoritesService {
     }));
   }
 
-  async toggle({ userId, propertyId }: ToggleFavoriteDto) {
+  async toggle(userId: string, { propertyId }: ToggleFavoriteDto) {
     const existing = await this.prisma.savedProperty.findUnique({
       where: { userId_propertyId: { userId, propertyId } },
     });

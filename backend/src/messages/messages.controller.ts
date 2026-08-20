@@ -1,24 +1,27 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { MessagesService } from './messages.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Get('threads')
-  findThreads(@Query('userId') userId: string) {
-    return this.messagesService.findThreads(userId);
+  findThreads(@CurrentUser() user: { id: string }) {
+    return this.messagesService.findThreads(user.id);
   }
 
   @Get('threads/:threadId')
-  findMessages(@Param('threadId') threadId: string) {
-    return this.messagesService.findMessages(threadId);
+  findMessages(@CurrentUser() user: { id: string }, @Param('threadId') threadId: string) {
+    return this.messagesService.findMessages(threadId, user.id);
   }
 
   @Post()
-  sendMessage(@Body() dto: SendMessageDto) {
-    return this.messagesService.sendMessage(dto);
+  sendMessage(@CurrentUser() user: { id: string }, @Body() dto: SendMessageDto) {
+    return this.messagesService.sendMessage(user.id, dto);
   }
 }

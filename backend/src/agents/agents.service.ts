@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import type { CreateAgentDto } from './dto/create-agent.dto';
 
 const AGENT_INCLUDE = { user: { select: { name: true, phone: true, email: true } } } as const;
 
@@ -8,33 +9,43 @@ const AGENT_INCLUDE = { user: { select: { name: true, phone: true, email: true }
 export class AgentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Same "demo persona" stand-in as UsersService.getDemoUser (CLAUDE.md §1 —
-  // real Phone OTP auth isn't built yet). Prefers a verified agent for a
-  // fuller dashboard demo; seed-agnostic, works with any locale's data.
-  async getDemoAgent() {
-    const agent =
-      (await this.prisma.agent.findFirst({
-        where: { verified: true },
-        orderBy: { createdAt: 'asc' },
-        include: AGENT_INCLUDE,
-      })) ??
-      (await this.prisma.agent.findFirst({ orderBy: { createdAt: 'asc' }, include: AGENT_INCLUDE }));
-
-    if (!agent) {
-      throw new NotFoundException('No agent available');
-    }
-    return agent;
+  // Returns null (not a 404) when the current user isn't an agent yet — a
+  // regular buyer visiting Profile should see "become an agent", not an
+  // error.
+  findByUserId(userId: string) {
+    return this.prisma.agent.findUnique({ where: { userId }, include: AGENT_INCLUDE });
   }
 
-  private async assertExists(id: string) {
-    const agent = await this.prisma.agent.findUnique({ where: { id } });
+  async create(userId: string, dto: CreateAgentDto) {
+    const existing = await this.prisma.agent.findUnique({ where: { userId } });
+    if (existing) {
+      throw new BadRequestException('You already have an agent profile.');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const agent = await tx.agent.create({
+        data: { userId, businessName: dto.businessName, bio: dto.bio },
+        include: AGENT_INCLUDE,
+      });
+      // Grants listing-creation access; verification (the "Agent Verified"
+      // badge) still goes through the admin queue separately (CLAUDE.md §4).
+      await tx.user.update({ where: { id: userId }, data: { role: 'AGENT' } });
+      return agent;
+    });
+  }
+
+  private async assertOwnership(agentId: string, userId: string) {
+    const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
     if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+    if (agent.userId !== userId) {
       throw new NotFoundException('Agent not found');
     }
   }
 
-  async getDashboard(agentId: string) {
-    await this.assertExists(agentId);
+  async getDashboard(agentId: string, userId: string) {
+    await this.assertOwnership(agentId, userId);
 
     const [statusCounts, totalLeads, recentLeads] = await Promise.all([
       this.prisma.property.groupBy({ by: ['status'], where: { agentId }, _count: { _all: true } }),
@@ -72,8 +83,8 @@ export class AgentsService {
     };
   }
 
-  async findListings(agentId: string) {
-    await this.assertExists(agentId);
+  async findListings(agentId: string, userId: string) {
+    await this.assertOwnership(agentId, userId);
 
     const properties = await this.prisma.property.findMany({
       where: { agentId },

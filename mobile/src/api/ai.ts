@@ -1,4 +1,4 @@
-import { apiRequest, buildQueryString } from './client';
+import { apiRequest } from './client';
 import type { ChatMessage, ListingCopy, ParsedSearchResult, PropertyInsight } from './types';
 
 export function parseSearch(query: string) {
@@ -8,8 +8,10 @@ export function parseSearch(query: string) {
   });
 }
 
-export function fetchPropertyInsight(propertyId: string, userId?: string) {
-  return apiRequest<PropertyInsight>(`/ai/properties/${propertyId}/insight${buildQueryString({ userId })}`);
+// Auth is optional here (server reads the Bearer token if present) — the
+// score is public, only the Investment Analysis section gates on tier.
+export function fetchPropertyInsight(propertyId: string) {
+  return apiRequest<PropertyInsight>(`/ai/properties/${propertyId}/insight`);
 }
 
 export function sendChatMessage(propertyId: string, message: string, history: ChatMessage[]) {

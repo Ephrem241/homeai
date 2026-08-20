@@ -2,13 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { fetchThreadMessages, fetchThreads, sendMessage } from '../api/messages';
 import type { SendMessageInput } from '../api/types';
+import { useAuth } from './useAuth';
 
-export function useThreadsQuery(userId: string | undefined) {
-  return useQuery({
-    queryKey: ['messageThreads', userId],
-    queryFn: () => fetchThreads(userId as string),
-    enabled: Boolean(userId),
-  });
+export function useThreadsQuery() {
+  const { isAuthenticated } = useAuth();
+  return useQuery({ queryKey: ['messageThreads'], queryFn: fetchThreads, enabled: isAuthenticated });
 }
 
 export function useThreadMessagesQuery(threadId: string | undefined) {

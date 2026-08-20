@@ -4,18 +4,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { Button } from '../components';
-import { useDemoAgent } from '../hooks/useAgent';
-import { useDemoUser } from '../hooks/useDemoUser';
+import { useMyAgentQuery } from '../hooks/useAgent';
+import { useAuth } from '../hooks/useAuth';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
-// No role-switching UI yet (Phone OTP auth arrives in a later phase per
-// CLAUDE.md §1) — this demo persona has both buyer and agent access so
-// Phase 5's agent tools are reachable end to end.
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
-  const { data: user } = useDemoUser();
-  const { data: agent } = useDemoAgent();
+  const { user, logout } = useAuth();
+  const { data: agent } = useMyAgentQuery();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
@@ -30,22 +27,31 @@ export default function ProfileScreen() {
           <Text className="font-sans text-sm text-slate-gray">{user?.phone ?? ''}</Text>
         </View>
 
-        {agent ? (
-          <View className="gap-3 rounded-lg border border-mist bg-white p-4">
-            <View className="flex-row items-center gap-2">
-              <Ionicons name="briefcase-outline" size={18} color={colors.navy} />
-              <Text className="font-sans-semibold text-base text-charcoal">Agent tools</Text>
-            </View>
-            <Text className="font-sans text-sm text-slate-gray">
-              Manage listings for {agent.businessName}.
-            </Text>
-            <Button
-              label="Open Agent Dashboard"
-              variant="primary"
-              onPress={() => navigation.navigate('AgentDashboard')}
-            />
+        <View className="gap-3 rounded-lg border border-mist bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="briefcase-outline" size={18} color={colors.navy} />
+            <Text className="font-sans-semibold text-base text-charcoal">Agent tools</Text>
           </View>
-        ) : null}
+          {agent ? (
+            <>
+              <Text className="font-sans text-sm text-slate-gray">Manage listings for {agent.businessName}.</Text>
+              <Button
+                label="Open Agent Dashboard"
+                variant="primary"
+                onPress={() => navigation.navigate('AgentDashboard')}
+              />
+            </>
+          ) : (
+            <>
+              <Text className="font-sans text-sm text-slate-gray">List properties by creating an agent profile.</Text>
+              <Button
+                label="Become an agent"
+                variant="secondary"
+                onPress={() => navigation.navigate('BecomeAgent')}
+              />
+            </>
+          )}
+        </View>
 
         <View className="gap-3 rounded-lg border border-mist bg-white p-4">
           <View className="flex-row items-center gap-2">
@@ -71,21 +77,22 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.slateGray} />
         </Pressable>
 
-        {/* No auth-gated role switching yet (CLAUDE.md §1) — always reachable so
-            the admin tools built in Phase 7 can be exercised against the real
-            backend, same as Agent Dashboard above. */}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('AdminDashboard')}
-          className="flex-row items-center justify-between rounded-lg border border-mist bg-white p-4"
-          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-        >
-          <View className="flex-row items-center gap-2">
-            <Ionicons name="shield-outline" size={18} color={colors.navy} />
-            <Text className="font-sans-semibold text-base text-charcoal">Admin Dashboard</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.slateGray} />
-        </Pressable>
+        {user?.role === 'ADMIN' ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('AdminDashboard')}
+            className="flex-row items-center justify-between rounded-lg border border-mist bg-white p-4"
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          >
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="shield-outline" size={18} color={colors.navy} />
+              <Text className="font-sans-semibold text-base text-charcoal">Admin Dashboard</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.slateGray} />
+          </Pressable>
+        ) : null}
+
+        <Button label="Log out" variant="secondary" onPress={() => logout()} />
       </ScrollView>
     </SafeAreaView>
   );

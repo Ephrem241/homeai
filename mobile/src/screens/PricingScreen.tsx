@@ -3,7 +3,8 @@ import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { SubscriptionTier } from '../api/types';
 import { Button, HeaderBar } from '../components';
-import { useDemoUser, useUpdateTier } from '../hooks/useDemoUser';
+import { useAuth } from '../hooks/useAuth';
+import { useUpdateTier } from '../hooks/useUsers';
 import { colors } from '../theme/tokens';
 
 const TIERS: { tier: SubscriptionTier; name: string; price: string; features: string[] }[] = [
@@ -37,7 +38,7 @@ const TIERS: { tier: SubscriptionTier; name: string; price: string; features: st
 // stub sets the tier directly so the gating built for Investment Analysis
 // and AI Designer generations (Phase 7) can be exercised end to end.
 export default function PricingScreen() {
-  const { data: user } = useDemoUser();
+  const { user } = useAuth();
   const updateTier = useUpdateTier();
 
   return (
@@ -74,11 +75,8 @@ export default function PricingScreen() {
                 label={isCurrent ? 'Current plan' : `Choose ${option.name}`}
                 variant={isCurrent ? 'secondary' : isPremium ? 'premium' : 'primary'}
                 disabled={isCurrent}
-                loading={updateTier.isPending && updateTier.variables?.tier === option.tier}
-                onPress={() => {
-                  if (!user) return;
-                  updateTier.mutate({ userId: user.id, tier: option.tier });
-                }}
+                loading={updateTier.isPending && updateTier.variables === option.tier}
+                onPress={() => updateTier.mutate(option.tier)}
               />
             </View>
           );

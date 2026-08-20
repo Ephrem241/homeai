@@ -1,19 +1,22 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 import { FavoritesService } from './favorites.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('favorites')
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
   @Get()
-  list(@Query('userId') userId: string) {
-    return this.favoritesService.list(userId);
+  list(@CurrentUser() user: { id: string }) {
+    return this.favoritesService.list(user.id);
   }
 
   @Post('toggle')
-  toggle(@Body() dto: ToggleFavoriteDto) {
-    return this.favoritesService.toggle(dto);
+  toggle(@CurrentUser() user: { id: string }, @Body() dto: ToggleFavoriteDto) {
+    return this.favoritesService.toggle(user.id, dto);
   }
 }

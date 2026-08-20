@@ -17,17 +17,35 @@ import {
 } from '@expo-google-fonts/manrope';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AuthProvider, useAuth } from './src/hooks/useAuth';
+import AuthStack from './src/navigation/AuthStack';
 import RootNavigator from './src/navigation/RootNavigator';
+import { colors } from './src/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
 });
+
+function Gate() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-ivory">
+        <ActivityIndicator color={colors.navy} />
+      </View>
+    );
+  }
+
+  return isAuthenticated ? <RootNavigator /> : <AuthStack />;
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -54,9 +72,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
+        <AuthProvider>
+          <NavigationContainer>
+            <Gate />
+          </NavigationContainer>
+        </AuthProvider>
         <StatusBar style="dark" />
       </SafeAreaProvider>
     </QueryClientProvider>

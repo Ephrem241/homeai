@@ -6,7 +6,6 @@ import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { PropertyPurpose, PropertyType, UpdatePropertyInput } from '../api/types';
 import { Button, FilterChip, HeaderBar, Input, LocationPickerSheet, SegmentedTabs, SkeletonBlock } from '../components';
-import { useDemoAgent } from '../hooks/useAgent';
 import {
   useCreateProperty,
   useGenerateListingCopy,
@@ -127,7 +126,6 @@ export default function ListingCreateScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const resumeId = route.params?.propertyId;
 
-  const { data: agent } = useDemoAgent();
   const existing = usePropertyQuery(resumeId);
   const createMutation = useCreateProperty();
   const updateMutation = useUpdateProperty();
@@ -218,9 +216,7 @@ export default function ListingCreateScreen() {
 
     try {
       if (step === 1 && !propertyId) {
-        if (!agent) throw new Error('No agent available');
         const created = await createMutation.mutateAsync({
-          agentId: agent.id,
           type: state.type as PropertyType,
           purpose: state.purpose as PropertyPurpose,
           countryId: state.countryId as string,

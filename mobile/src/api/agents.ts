@@ -1,14 +1,18 @@
 import { apiRequest } from './client';
 import type { Agent, AgentDashboard, AgentListing } from './types';
 
-export function fetchDemoAgent() {
-  return apiRequest<Agent>('/agents/demo');
+export function fetchMyAgent() {
+  return apiRequest<Agent | null>('/agents/me');
 }
 
-export function fetchAgentDashboard(agentId: string) {
-  return apiRequest<AgentDashboard>(`/agents/${agentId}/dashboard`);
+export function createAgent(input: { businessName: string; bio?: string }) {
+  return apiRequest<Agent>('/agents', { method: 'POST', body: JSON.stringify(input) });
 }
 
-export function fetchAgentListings(agentId: string) {
-  return apiRequest<AgentListing[]>(`/agents/${agentId}/listings`);
+export function fetchAgentDashboard() {
+  return apiRequest<AgentDashboard>('/agents/me/dashboard');
+}
+
+export function fetchAgentListings() {
+  return apiRequest<AgentListing[]>('/agents/me/listings');
 }

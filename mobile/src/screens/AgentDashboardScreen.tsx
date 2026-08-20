@@ -5,7 +5,7 @@ import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { PropertyStatus } from '../api/types';
 import { Button, EmptyState, HeaderBar, SkeletonBlock } from '../components';
-import { useAgentDashboardQuery, useAgentListingsQuery, useDemoAgent } from '../hooks/useAgent';
+import { useAgentDashboardQuery, useAgentListingsQuery, useMyAgentQuery } from '../hooks/useAgent';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
@@ -57,9 +57,9 @@ function ListingRowSkeleton() {
 
 export default function AgentDashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
-  const { data: agent } = useDemoAgent();
-  const dashboard = useAgentDashboardQuery(agent?.id);
-  const listings = useAgentListingsQuery(agent?.id);
+  const { data: agent } = useMyAgentQuery();
+  const dashboard = useAgentDashboardQuery(Boolean(agent));
+  const listings = useAgentListingsQuery(Boolean(agent));
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">

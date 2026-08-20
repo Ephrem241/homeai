@@ -2,9 +2,6 @@ import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class SendMessageDto {
   @IsString()
-  senderId!: string;
-
-  @IsString()
   recipientId!: string;
 
   @IsOptional()

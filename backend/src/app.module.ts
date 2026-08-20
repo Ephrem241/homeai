@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { AgentsModule } from './agents/agents.module';
 import { AiModule } from './ai/ai.module';
+import { AuthModule } from './auth/auth.module';
 import { DesignsModule } from './designs/designs.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { HealthModule } from './health/health.module';
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     DesignsModule,
     AdminModule,
     MessagesModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

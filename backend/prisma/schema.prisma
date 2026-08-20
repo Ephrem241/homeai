@@ -55,6 +55,23 @@ enum SubscriptionTier {
   AGENT_PRO
 }
 
+// Short-lived phone verification codes for the OTP login flow (CLAUDE.md §1
+// — Phone OTP is the primary auth method, global-first via E.164 numbers,
+// never an Ethiopia-specific pattern). One active code per phone at a time;
+// a new request supersedes the previous one rather than stacking.
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  salt       String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone])
+}
+
 model User {
   id               String           @id @default(cuid())
   name             String

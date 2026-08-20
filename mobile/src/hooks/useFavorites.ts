@@ -2,16 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { fetchFavorites, toggleFavorite } from '../api/favorites';
-import { useDemoUser } from './useDemoUser';
+import { useAuth } from './useAuth';
 
 export function useFavoritesQuery() {
-  const { data: user } = useDemoUser();
-  const userId = user?.id;
+  const { isAuthenticated } = useAuth();
 
   return useQuery({
-    queryKey: ['favorites', userId],
-    queryFn: () => fetchFavorites(userId as string),
-    enabled: Boolean(userId),
+    queryKey: ['favorites'],
+    queryFn: fetchFavorites,
+    enabled: isAuthenticated,
   });
 }
 
@@ -21,17 +20,12 @@ export function useFavoritedIds() {
 }
 
 export function useToggleFavorite() {
-  const { data: user } = useDemoUser();
   const queryClient = useQueryClient();
-  const userId = user?.id;
 
   return useMutation({
-    mutationFn: (propertyId: string) => {
-      if (!userId) throw new Error('No current user yet');
-      return toggleFavorite(userId, propertyId);
-    },
+    mutationFn: (propertyId: string) => toggleFavorite(propertyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites', userId] });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },
   });
 }

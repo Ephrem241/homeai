@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, Text, View } from 'react-native';
 
 import { EmptyState, HeaderBar, Input } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
+import { useAuth } from '../hooks/useAuth';
 import { useSendMessageMutation, useThreadMessagesQuery } from '../hooks/useMessages';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
@@ -19,7 +19,7 @@ export default function MessageThreadScreen() {
   const route = useRoute<RouteProp<ProfileStackParamList, 'MessageThread'>>();
   const { otherUserId, otherUserName, propertyId, propertyTitle } = route.params;
 
-  const { data: user } = useDemoUser();
+  const { user } = useAuth();
   const threadId = user ? buildThreadId(user.id, otherUserId) : undefined;
   const messages = useThreadMessagesQuery(threadId);
   const sendMessage = useSendMessageMutation();
@@ -27,8 +27,8 @@ export default function MessageThreadScreen() {
   const [body, setBody] = useState('');
 
   function handleSend() {
-    if (!user || !body.trim()) return;
-    sendMessage.mutate({ senderId: user.id, recipientId: otherUserId, propertyId, body: body.trim() });
+    if (!body.trim()) return;
+    sendMessage.mutate({ recipientId: otherUserId, propertyId, body: body.trim() });
     setBody('');
   }
 

@@ -93,7 +93,7 @@ export type FavoriteItem = {
 
 export type SubscriptionTier = 'FREE' | 'PLUS' | 'PRO' | 'AGENT_PRO';
 
-export type DemoUser = {
+export type AuthUser = {
   id: string;
   name: string;
   phone: string;
@@ -201,7 +201,6 @@ export type AgentListing = {
 };
 
 export type CreatePropertyInput = {
-  agentId: string;
   type: PropertyType;
   purpose: PropertyPurpose;
   countryId: string;
@@ -249,14 +248,12 @@ export type Design = {
 };
 
 export type GenerateDesignInput = {
-  userId?: string;
   originalImage: string;
   roomType: string;
   style: string;
 };
 
-export type SaveDesignInput = Omit<GenerateDesignInput, 'userId'> & {
-  userId: string;
+export type SaveDesignInput = GenerateDesignInput & {
   generatedImage: string;
   propertyId?: string;
 };
@@ -324,7 +321,6 @@ export type ThreadMessage = {
 };
 
 export type SendMessageInput = {
-  senderId: string;
   recipientId: string;
   propertyId?: string;
   body: string;

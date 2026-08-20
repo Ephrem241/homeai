@@ -4,15 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { Button, EmptyState } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
 import { useMyDesignsQuery } from '../hooks/useDesigns';
 import type { AIStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
 export default function AIScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AIStackParamList>>();
-  const { data: user } = useDemoUser();
-  const designs = useMyDesignsQuery(user?.id);
+  const designs = useMyDesignsQuery();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">

@@ -1,9 +1,6 @@
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class SaveDesignDto {
-  @IsString()
-  userId!: string;
-
   @IsOptional()
   @IsString()
   propertyId?: string;

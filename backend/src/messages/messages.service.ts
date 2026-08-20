@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Message } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,15 +11,19 @@ function buildThreadId(userIdA: string, userIdB: string): string {
   return [userIdA, userIdB].sort().join('_');
 }
 
+function isParticipant(threadId: string, userId: string): boolean {
+  return threadId.split('_').includes(userId);
+}
+
 @Injectable()
 export class MessagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  sendMessage(dto: SendMessageDto) {
+  sendMessage(senderId: string, dto: SendMessageDto) {
     return this.prisma.message.create({
       data: {
-        threadId: buildThreadId(dto.senderId, dto.recipientId),
-        senderId: dto.senderId,
+        threadId: buildThreadId(senderId, dto.recipientId),
+        senderId,
         propertyId: dto.propertyId,
         body: dto.body,
       },
@@ -74,7 +78,15 @@ export class MessagesService {
     );
   }
 
-  findMessages(threadId: string): Promise<(Message & { property: { id: string; title: string; photos: string[] } | null })[]> {
+  findMessages(
+    threadId: string,
+    userId: string,
+  ): Promise<(Message & { property: { id: string; title: string; photos: string[] } | null })[]> {
+    if (!isParticipant(threadId, userId)) {
+      // 404s rather than 403s so a guessed threadId can't be used to probe
+      // for its existence.
+      throw new NotFoundException('Thread not found');
+    }
     return this.prisma.message.findMany({
       where: { threadId },
       orderBy: { createdAt: 'asc' },

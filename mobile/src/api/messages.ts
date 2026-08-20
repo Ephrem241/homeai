@@ -1,8 +1,8 @@
-import { apiRequest, buildQueryString } from './client';
+import { apiRequest } from './client';
 import type { MessageThread, SendMessageInput, ThreadMessage } from './types';
 
-export function fetchThreads(userId: string) {
-  return apiRequest<MessageThread[]>(`/messages/threads${buildQueryString({ userId })}`);
+export function fetchThreads() {
+  return apiRequest<MessageThread[]>('/messages/threads');
 }
 
 export function fetchThreadMessages(threadId: string) {

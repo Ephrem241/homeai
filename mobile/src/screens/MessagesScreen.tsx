@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, Pressable, SafeAreaView, Text, View } from 'react-native';
 
 import { EmptyState, HeaderBar, SkeletonBlock } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
+import { useAuth } from '../hooks/useAuth';
 import { useThreadsQuery } from '../hooks/useMessages';
 import type { ProfileStackParamList } from '../navigation/types';
 
@@ -18,8 +18,8 @@ function ThreadRowSkeleton() {
 
 export default function MessagesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
-  const { data: user } = useDemoUser();
-  const threads = useThreadsQuery(user?.id);
+  const { user } = useAuth();
+  const threads = useThreadsQuery();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">

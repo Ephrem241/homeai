@@ -3,7 +3,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
 
 import { Button, EmptyState, HeaderBar, SkeletonBlock } from '../components';
-import { useDemoUser } from '../hooks/useDemoUser';
 import { useDeleteDesign, useDesignQuery } from '../hooks/useDesigns';
 import type { AIStackParamList } from '../navigation/types';
 
@@ -12,8 +11,7 @@ export default function DesignDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AIStackParamList>>();
   const { designId } = route.params;
 
-  const { data: user } = useDemoUser();
-  const { data: design, isLoading, isError, refetch } = useDesignQuery(designId, user?.id);
+  const { data: design, isLoading, isError, refetch } = useDesignQuery(designId);
   const deleteMutation = useDeleteDesign();
 
   async function handleShare() {
@@ -26,8 +24,8 @@ export default function DesignDetailScreen() {
   }
 
   async function handleDelete() {
-    if (!design || !user) return;
-    await deleteMutation.mutateAsync({ id: design.id, userId: user.id });
+    if (!design) return;
+    await deleteMutation.mutateAsync(design.id);
     navigation.goBack();
   }
 
