@@ -1,5 +1,6 @@
 export type HomeStackParamList = {
   Home: undefined;
+  ComponentDemo: undefined;
 };
 
 export type ExploreStackParamList = {

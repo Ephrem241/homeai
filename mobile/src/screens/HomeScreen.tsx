@@ -1,5 +1,10 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, SafeAreaView, Text, View } from 'react-native';
+
+import { Button } from '../components';
+import type { HomeStackParamList } from '../navigation/types';
 
 const COLOR_SWATCHES: { name: string; className: string; textClassName?: string }[] = [
   { name: 'navy', className: 'bg-navy', textClassName: 'text-white' },
@@ -23,6 +28,7 @@ const RADII: { name: string; className: string }[] = [
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   return (
     <SafeAreaView className="flex-1 bg-ivory">
@@ -35,6 +41,12 @@ export default function HomeScreen() {
             {t('common.tagline')}
           </Text>
         </View>
+
+        <Button
+          label={t('home.componentLibraryCta')}
+          variant="secondary"
+          onPress={() => navigation.navigate('ComponentDemo')}
+        />
 
         <View className="gap-3">
           <Text className="font-sans-semibold text-lg text-charcoal">

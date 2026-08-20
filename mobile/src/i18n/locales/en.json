@@ -15,7 +15,8 @@
     "subtitle": "Phase 0 scaffold — tokens, navigation, and i18n are wired up.",
     "tokensHeading": "Color tokens",
     "radiiHeading": "Radii",
-    "typeHeading": "Type"
+    "typeHeading": "Type",
+    "componentLibraryCta": "View component library"
   },
   "placeholder": {
     "comingSoon": "Coming in a later phase."
