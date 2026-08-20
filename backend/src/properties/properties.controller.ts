@@ -45,4 +45,9 @@ export class PropertiesController {
   publish(@Param('id') id: string) {
     return this.propertiesService.publish(id);
   }
+
+  @Post(':id/report')
+  report(@Param('id') id: string) {
+    return this.propertiesService.report(id);
+  }
 }

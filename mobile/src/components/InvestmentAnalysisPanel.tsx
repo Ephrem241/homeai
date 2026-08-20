@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 
 import type { PropertyInsight } from '../api/types';
 import { colors } from '../theme/tokens';
+import Button from './Button';
 import SkeletonBlock from './Skeleton';
 
 const CATEGORY_CONFIG: Record<
@@ -14,15 +15,16 @@ const CATEGORY_CONFIG: Record<
   NEEDS_REVIEW: { label: 'Needs review', className: 'bg-mist', textClassName: 'text-slate-gray', icon: 'help-circle-outline' },
 };
 
-// Gold accent used sparingly, per CLAUDE.md §2 — a "Premium" marker only for
-// now; Phase 7 wires the actual subscription gate. Every claim here is
+// Gold accent used sparingly, per CLAUDE.md §2. Every claim here is
 // explicitly framed as an AI estimate, never as financial advice.
 export default function InvestmentAnalysisPanel({
   insight,
   isLoading,
+  onUpgrade,
 }: {
   insight?: PropertyInsight;
   isLoading: boolean;
+  onUpgrade?: () => void;
 }) {
   if (isLoading) {
     return (
@@ -34,7 +36,32 @@ export default function InvestmentAnalysisPanel({
     );
   }
 
-  if (!insight || !insight.available || !insight.investmentCategory) {
+  if (!insight || !insight.available) {
+    return null;
+  }
+
+  // Free-tier gate (CLAUDE.md §5 Phase 7) — the score/breakdown above stay
+  // free; only this investment section is a paid feature.
+  if (insight.investmentGated) {
+    return (
+      <View className="gap-3 rounded-lg border border-gold/40 bg-white p-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-sans-semibold text-base text-charcoal">Investment Analysis</Text>
+          <View className="flex-row items-center gap-1 rounded-full bg-gold px-2.5 py-1">
+            <Ionicons name="star" size={11} color={colors.charcoal} />
+            <Text className="font-sans-semibold text-xs text-charcoal">Premium</Text>
+          </View>
+        </View>
+        <Text className="font-sans text-sm leading-5 text-slate-gray">
+          Upgrade to see an AI-generated investment read on this property — value vs. comparables, and
+          whether it looks strong, moderate, or needs a closer look.
+        </Text>
+        {onUpgrade ? <Button label="Upgrade to unlock" variant="premium" onPress={onUpgrade} /> : null}
+      </View>
+    );
+  }
+
+  if (!insight.investmentCategory) {
     return null;
   }
 

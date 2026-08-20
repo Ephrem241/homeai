@@ -15,7 +15,8 @@ const LIST_INCLUDE = {
 
 const DETAIL_INCLUDE = {
   ...LIST_INCLUDE,
-  ownerUser: { select: { name: true } },
+  agent: { select: { businessName: true, verified: true, userId: true } },
+  ownerUser: { select: { id: true, name: true } },
 } satisfies Prisma.PropertyInclude;
 
 type PropertyWithRelations = Prisma.PropertyGetPayload<{ include: typeof LIST_INCLUDE }>;
@@ -164,8 +165,18 @@ export class PropertiesService {
       cityId: property.cityId,
       countryId: property.countryId,
       contact: property.agent
-        ? { name: property.agent.businessName, verified: property.agent.verified, type: 'agent' as const }
-        : { name: property.ownerUser?.name ?? 'Owner', verified: false, type: 'owner' as const },
+        ? {
+            userId: property.agent.userId,
+            name: property.agent.businessName,
+            verified: property.agent.verified,
+            type: 'agent' as const,
+          }
+        : {
+            userId: property.ownerUser?.id ?? null,
+            name: property.ownerUser?.name ?? 'Owner',
+            verified: false,
+            type: 'owner' as const,
+          },
     };
   }
 
@@ -251,6 +262,27 @@ export class PropertiesService {
     const property = await this.prisma.property.update({
       where: { id },
       data: { status: 'PENDING' },
+      include: DETAIL_INCLUDE,
+    });
+    return this.toDetailItem(property);
+  }
+
+  // Buyer-facing — deliberately narrower than the admin status setter
+  // (admin.service.ts): only a live, verified listing can be reported, and
+  // it only ever moves to REPORTED, never any other status. An admin
+  // reviews it from there (CLAUDE.md §5 Phase 7 verification queue).
+  async report(id: string) {
+    const existing = await this.prisma.property.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Property not found');
+    }
+    if (existing.status !== 'VERIFIED') {
+      throw new BadRequestException('Only a verified listing can be reported');
+    }
+
+    const property = await this.prisma.property.update({
+      where: { id },
+      data: { status: 'REPORTED' },
       include: DETAIL_INCLUDE,
     });
     return this.toDetailItem(property);

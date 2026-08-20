@@ -54,10 +54,21 @@ export type AIStackParamList = {
 
 export type ListingCreateParams = { propertyId?: string } | undefined;
 
+export type MessageThreadParams = {
+  otherUserId: string;
+  otherUserName: string;
+  propertyId?: string;
+  propertyTitle?: string;
+};
+
 export type ProfileStackParamList = {
   Profile: undefined;
   AgentDashboard: undefined;
   ListingCreate: ListingCreateParams;
+  AdminDashboard: undefined;
+  Pricing: undefined;
+  Messages: undefined;
+  MessageThread: MessageThreadParams;
 };
 
 export type RootTabParamList = {
@@ -65,5 +76,8 @@ export type RootTabParamList = {
   ExploreTab: { screen: 'Explore'; params: SearchResultsParams } | undefined;
   SavedTab: undefined;
   AITab: undefined;
-  ProfileTab: undefined;
+  ProfileTab:
+    | { screen: 'Pricing' }
+    | { screen: 'MessageThread'; params: MessageThreadParams }
+    | undefined;
 };

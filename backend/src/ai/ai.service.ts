@@ -108,6 +108,11 @@ export type PropertyInsight = {
   highlights?: string[];
   investmentCategory?: 'STRONG' | 'MODERATE' | 'NEEDS_REVIEW';
   investmentSummary?: string;
+  // True when the investment fields above were withheld because the
+  // viewer's subscription tier doesn't include Investment Analysis
+  // (CLAUDE.md §5 Phase 7 — gated premium feature). The score/breakdown
+  // stay free; only this section is gated.
+  investmentGated?: boolean;
   generatedAt?: string;
 };
 
@@ -215,10 +220,12 @@ export class AiService {
 
   // Generated once per property, then cached in AIInsight — re-running the
   // model on every detail-screen view would be slow and needlessly costly.
-  async getPropertyInsight(propertyId: string): Promise<PropertyInsight> {
+  async getPropertyInsight(propertyId: string, userId?: string): Promise<PropertyInsight> {
+    const investmentGated = await this.isInvestmentGated(userId);
+
     const existing = await this.prisma.aIInsight.findUnique({ where: { propertyId } });
     if (existing) {
-      return this.toInsightResult(existing);
+      return this.toInsightResult(existing, investmentGated);
     }
 
     const property = await this.propertiesService.findOne(propertyId);
@@ -268,15 +275,19 @@ export class AiService {
       update: { score: generated.score, confidence: generated.confidence, breakdown },
     });
 
-    return this.toInsightResult(saved);
+    return this.toInsightResult(saved, investmentGated);
   }
 
-  private toInsightResult(insight: {
-    score: number;
-    confidence: number;
-    breakdown: Prisma.JsonValue;
-    generatedAt: Date;
-  }): PropertyInsight {
+  private async isInvestmentGated(userId?: string): Promise<boolean> {
+    if (!userId) return true;
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { subscriptionTier: true } });
+    return !user || user.subscriptionTier === 'FREE';
+  }
+
+  private toInsightResult(
+    insight: { score: number; confidence: number; breakdown: Prisma.JsonValue; generatedAt: Date },
+    investmentGated: boolean,
+  ): PropertyInsight {
     const breakdown = insight.breakdown as Record<string, unknown>;
     return {
       available: true,
@@ -291,8 +302,9 @@ export class AiService {
         investment: breakdown.investment as number,
       },
       highlights: breakdown.highlights as string[],
-      investmentCategory: breakdown.investmentCategory as PropertyInsight['investmentCategory'],
-      investmentSummary: breakdown.investmentSummary as string,
+      investmentCategory: investmentGated ? undefined : (breakdown.investmentCategory as PropertyInsight['investmentCategory']),
+      investmentSummary: investmentGated ? undefined : (breakdown.investmentSummary as string),
+      investmentGated,
       generatedAt: insight.generatedAt.toISOString(),
     };
   }

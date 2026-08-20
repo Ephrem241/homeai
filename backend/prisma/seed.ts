@@ -110,7 +110,13 @@ async function seedAgentsAndUsers() {
     create: { name: 'Marta Alemu', phone: '+251922200003', email: 'marta@example.com', role: 'BUYER' },
   });
 
-  return { agents, buyer, renter, owner };
+  const admin = await prisma.user.upsert({
+    where: { phone: '+251900000001' },
+    update: {},
+    create: { name: 'Admin', phone: '+251900000001', email: 'admin@homiai.app', role: 'ADMIN' },
+  });
+
+  return { agents, buyer, renter, owner, admin };
 }
 
 type PropertySeed = {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { AiService } from './ai.service';
 import { ChatMessageDto } from './dto/chat-message.dto';
@@ -14,8 +14,8 @@ export class AiController {
   }
 
   @Get('properties/:id/insight')
-  getInsight(@Param('id') id: string) {
-    return this.aiService.getPropertyInsight(id);
+  getInsight(@Param('id') id: string, @Query('userId') userId?: string) {
+    return this.aiService.getPropertyInsight(id, userId);
   }
 
   @Post('properties/:id/chat')

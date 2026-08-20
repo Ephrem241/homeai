@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchPopularLocations,
   fetchProperties,
   fetchProperty,
   fetchRecommendedProperties,
+  reportProperty,
 } from '../api/properties';
 import type { PropertyFilters } from '../api/types';
 
@@ -34,5 +35,15 @@ export function usePopularLocationsQuery(limit = 6) {
   return useQuery({
     queryKey: ['properties', 'popular-locations', limit],
     queryFn: () => fetchPopularLocations(limit),
+  });
+}
+
+export function useReportProperty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => reportProperty(id),
+    onSuccess: (property) => {
+      queryClient.invalidateQueries({ queryKey: ['property', property.id] });
+    },
   });
 }

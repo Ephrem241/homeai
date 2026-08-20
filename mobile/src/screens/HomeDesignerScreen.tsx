@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
@@ -8,11 +10,16 @@ import type { GeneratedDesign } from '../api/types';
 import { Button, FilterChip, Input } from '../components';
 import { useDemoUser } from '../hooks/useDemoUser';
 import { useGenerateDesign, useSaveDesign } from '../hooks/useDesigns';
-import type { AIStackParamList } from '../navigation/types';
+import type { AIStackParamList, RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
 const ROOM_TYPES = ['Living Room', 'Bedroom', 'Kitchen', 'Bathroom', 'Dining Room', 'Home Office'];
 const STYLES = ['Modern', 'Minimalist', 'Scandinavian', 'Industrial', 'Bohemian', 'Traditional', 'Coastal'];
+
+type HomeDesignerNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<AIStackParamList>,
+  BottomTabNavigationProp<RootTabParamList>
+>;
 
 function SectionLabel({ children }: { children: string }) {
   return <Text className="font-sans-medium text-sm text-charcoal">{children}</Text>;
@@ -22,7 +29,7 @@ function SectionLabel({ children }: { children: string }) {
 // save/share, per CLAUDE.md §5 Phase 6. Nothing is written to "My Designs"
 // until the agent/user explicitly saves the generated preview.
 export default function HomeDesignerScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<AIStackParamList>>();
+  const navigation = useNavigation<HomeDesignerNavigationProp>();
   const { data: user } = useDemoUser();
   const generateMutation = useGenerateDesign();
   const saveMutation = useSaveDesign();
@@ -33,17 +40,24 @@ export default function HomeDesignerScreen() {
   const [result, setResult] = useState<GeneratedDesign | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gateInfo, setGateInfo] = useState<{ limit?: number; used?: number } | null>(null);
 
   const canGenerate = Boolean(originalImage.trim() && roomType && style);
 
   async function handleGenerate() {
     setError(null);
+    setGateInfo(null);
     try {
       const generated = await generateMutation.mutateAsync({
+        userId: user?.id,
         originalImage: originalImage.trim(),
         roomType: roomType as string,
         style: style as string,
       });
+      if (generated.gated) {
+        setGateInfo({ limit: generated.limit, used: generated.used });
+        return;
+      }
       setResult(generated);
       setSaved(false);
     } catch {
@@ -87,6 +101,7 @@ export default function HomeDesignerScreen() {
     setResult(null);
     setSaved(false);
     setError(null);
+    setGateInfo(null);
   }
 
   return (
@@ -156,6 +171,25 @@ export default function HomeDesignerScreen() {
         ) : null}
 
         {error ? <Text className="font-sans text-sm text-error">{error}</Text> : null}
+
+        {gateInfo ? (
+          <View className="gap-3 rounded-lg border border-gold/40 bg-white p-4">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="star" size={16} color={colors.gold} />
+              <Text className="font-sans-semibold text-base text-charcoal">Monthly limit reached</Text>
+            </View>
+            <Text className="font-sans text-sm leading-5 text-slate-gray">
+              Free plan includes {gateInfo.limit ?? 2} AI Designer generations a month
+              {gateInfo.used !== undefined ? ` — you've used ${gateInfo.used}.` : '.'} Upgrade for unlimited
+              generations.
+            </Text>
+            <Button
+              label="View plans"
+              variant="premium"
+              onPress={() => navigation.navigate('ProfileTab', { screen: 'Pricing' })}
+            />
+          </View>
+        ) : null}
 
         {result ? (
           <View className="gap-4">

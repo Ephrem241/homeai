@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import { Button } from '../components';
 import { useDemoAgent } from '../hooks/useAgent';
@@ -44,6 +44,46 @@ export default function ProfileScreen() {
             />
           </View>
         ) : null}
+
+        <View className="gap-3 rounded-lg border border-mist bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="star-outline" size={18} color={colors.gold} />
+            <Text className="font-sans-semibold text-base text-charcoal">Plan</Text>
+          </View>
+          <Text className="font-sans text-sm text-slate-gray">
+            Current plan: {user?.subscriptionTier ?? '—'}
+          </Text>
+          <Button label="View plans" variant="secondary" onPress={() => navigation.navigate('Pricing')} />
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('Messages')}
+          className="flex-row items-center justify-between rounded-lg border border-mist bg-white p-4"
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+        >
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="chatbubbles-outline" size={18} color={colors.navy} />
+            <Text className="font-sans-semibold text-base text-charcoal">Messages</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.slateGray} />
+        </Pressable>
+
+        {/* No auth-gated role switching yet (CLAUDE.md §1) — always reachable so
+            the admin tools built in Phase 7 can be exercised against the real
+            backend, same as Agent Dashboard above. */}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('AdminDashboard')}
+          className="flex-row items-center justify-between rounded-lg border border-mist bg-white p-4"
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+        >
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="shield-outline" size={18} color={colors.navy} />
+            <Text className="font-sans-semibold text-base text-charcoal">Admin Dashboard</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.slateGray} />
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

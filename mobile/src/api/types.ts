@@ -33,7 +33,7 @@ export type PropertyDetail = PropertyListItem & {
   neighborhoodId: string | null;
   cityId: string;
   countryId: string;
-  contact: { name: string; verified: boolean; type: 'agent' | 'owner' };
+  contact: { userId: string | null; name: string; verified: boolean; type: 'agent' | 'owner' };
 };
 
 export type PropertyListResponse = {
@@ -91,12 +91,15 @@ export type FavoriteItem = {
   savedAt: string;
 };
 
+export type SubscriptionTier = 'FREE' | 'PLUS' | 'PRO' | 'AGENT_PRO';
+
 export type DemoUser = {
   id: string;
   name: string;
   phone: string;
   email: string | null;
   role: string;
+  subscriptionTier: SubscriptionTier;
 };
 
 export type PropertyFilters = {
@@ -149,6 +152,7 @@ export type PropertyInsight = {
   highlights?: string[];
   investmentCategory?: 'STRONG' | 'MODERATE' | 'NEEDS_REVIEW';
   investmentSummary?: string;
+  investmentGated?: boolean;
   generatedAt?: string;
 };
 
@@ -228,6 +232,9 @@ export type UpdatePropertyInput = Partial<{
 export type GeneratedDesign = {
   imageUrl: string;
   isPlaceholder: boolean;
+  gated: boolean;
+  limit?: number;
+  used?: number;
 };
 
 export type Design = {
@@ -242,13 +249,83 @@ export type Design = {
 };
 
 export type GenerateDesignInput = {
+  userId?: string;
   originalImage: string;
   roomType: string;
   style: string;
 };
 
-export type SaveDesignInput = GenerateDesignInput & {
+export type SaveDesignInput = Omit<GenerateDesignInput, 'userId'> & {
   userId: string;
   generatedImage: string;
   propertyId?: string;
+};
+
+export type AdminOverview = {
+  totalUsers: number;
+  totalAgents: number;
+  verifiedAgents: number;
+  totalProperties: number;
+  byStatus: Record<PropertyStatus, number>;
+  totalLeads: number;
+  totalMessages: number;
+};
+
+export type AdminUser = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  role: string;
+  subscriptionTier: SubscriptionTier;
+  createdAt: string;
+};
+
+export type AdminAgent = {
+  id: string;
+  businessName: string;
+  verified: boolean;
+  userName: string;
+  userPhone: string;
+  listingCount: number;
+  createdAt: string;
+};
+
+export type AdminProperty = {
+  id: string;
+  title: string;
+  status: PropertyStatus;
+  type: PropertyType;
+  purpose: PropertyPurpose;
+  price: number;
+  currency: string;
+  photo: string | null;
+  listedBy: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MessageThread = {
+  threadId: string;
+  otherUser: { id: string; name: string };
+  lastMessage: { body: string; senderId: string; createdAt: string };
+  propertyTitle: string | null;
+};
+
+export type ThreadMessage = {
+  id: string;
+  threadId: string;
+  senderId: string;
+  propertyId: string | null;
+  body: string;
+  attachments: string[];
+  createdAt: string;
+  property: { id: string; title: string; photos: string[] } | null;
+};
+
+export type SendMessageInput = {
+  senderId: string;
+  recipientId: string;
+  propertyId?: string;
+  body: string;
 };

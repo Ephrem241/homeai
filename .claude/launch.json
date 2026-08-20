@@ -6,6 +6,12 @@
       "runtimeExecutable": "cmd",
       "runtimeArgs": ["/c", "cd mobile && npx expo start --web"],
       "port": 8081
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd backend && node dist/main.js"],
+      "port": 3000
     }
   ]
 }

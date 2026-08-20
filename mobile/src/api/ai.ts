@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest, buildQueryString } from './client';
 import type { ChatMessage, ListingCopy, ParsedSearchResult, PropertyInsight } from './types';
 
 export function parseSearch(query: string) {
@@ -8,8 +8,8 @@ export function parseSearch(query: string) {
   });
 }
 
-export function fetchPropertyInsight(propertyId: string) {
-  return apiRequest<PropertyInsight>(`/ai/properties/${propertyId}/insight`);
+export function fetchPropertyInsight(propertyId: string, userId?: string) {
+  return apiRequest<PropertyInsight>(`/ai/properties/${propertyId}/insight${buildQueryString({ userId })}`);
 }
 
 export function sendChatMessage(propertyId: string, message: string, history: ChatMessage[]) {

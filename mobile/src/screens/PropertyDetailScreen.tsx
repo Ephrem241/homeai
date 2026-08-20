@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
@@ -13,12 +15,18 @@ import {
   View,
 } from 'react-native';
 
-import { Button, EmptyState, InvestmentAnalysisPanel, PriceBadge, PropertyScoreCard, VerificationBadge } from '../components';
+import { AppModal, Button, EmptyState, InvestmentAnalysisPanel, PriceBadge, PropertyScoreCard, VerificationBadge } from '../components';
+import { useDemoUser } from '../hooks/useDemoUser';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
 import { usePropertyInsightQuery } from '../hooks/usePropertyInsight';
-import { usePropertyQuery } from '../hooks/useProperties';
-import type { ExploreStackParamList } from '../navigation/types';
+import { useReportProperty, usePropertyQuery } from '../hooks/useProperties';
+import type { ExploreStackParamList, RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
+
+type PropertyDetailNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<ExploreStackParamList>,
+  BottomTabNavigationProp<RootTabParamList>
+>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,14 +41,18 @@ function Spec({ icon, value }: { icon: keyof typeof Ionicons.glyphMap; value: st
 
 export default function PropertyDetailScreen() {
   const route = useRoute<RouteProp<ExploreStackParamList, 'PropertyDetail'>>();
-  const navigation = useNavigation<NativeStackNavigationProp<ExploreStackParamList>>();
+  const navigation = useNavigation<PropertyDetailNavigationProp>();
   const { propertyId } = route.params;
 
+  const { data: user } = useDemoUser();
   const { data: property, isLoading, isError, refetch } = usePropertyQuery(propertyId);
-  const insight = usePropertyInsightQuery(propertyId);
+  const insight = usePropertyInsightQuery(propertyId, user?.id);
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
+  const reportProperty = useReportProperty();
   const [activePhoto, setActivePhoto] = useState(0);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reported, setReported] = useState(false);
 
   if (isLoading) {
     return (
@@ -180,7 +192,11 @@ export default function PropertyDetailScreen() {
 
           <PropertyScoreCard insight={insight.data} isLoading={insight.isLoading} />
 
-          <InvestmentAnalysisPanel insight={insight.data} isLoading={insight.isLoading} />
+          <InvestmentAnalysisPanel
+            insight={insight.data}
+            isLoading={insight.isLoading}
+            onUpgrade={() => navigation.navigate('ProfileTab', { screen: 'Pricing' })}
+          />
 
           <View className="gap-2">
             <Text className="font-sans-semibold text-lg text-charcoal">Location</Text>
@@ -193,7 +209,7 @@ export default function PropertyDetailScreen() {
             </View>
           </View>
 
-          <View className="gap-2 rounded-lg border border-mist bg-white p-4">
+          <View className="gap-3 rounded-lg border border-mist bg-white p-4">
             <Text className="font-sans-medium text-xs uppercase text-slate-gray">
               {property.contact.type === 'agent' ? 'Listed by agent' : 'Listed by owner'}
             </Text>
@@ -201,9 +217,66 @@ export default function PropertyDetailScreen() {
               <Text className="font-sans-semibold text-base text-charcoal">{property.contact.name}</Text>
               {property.contact.verified ? <VerificationBadge status="agentVerified" /> : null}
             </View>
+            {property.contact.userId && property.contact.userId !== user?.id ? (
+              <Button
+                label={`Message ${property.contact.type === 'agent' ? 'agent' : 'owner'}`}
+                variant="secondary"
+                leftIcon={<Ionicons name="chatbubble-outline" size={16} color={colors.navy} />}
+                onPress={() =>
+                  navigation.navigate('ProfileTab', {
+                    screen: 'MessageThread',
+                    params: {
+                      otherUserId: property.contact.userId as string,
+                      otherUserName: property.contact.name,
+                      propertyId: property.id,
+                      propertyTitle: property.title,
+                    },
+                  })
+                }
+              />
+            ) : null}
           </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setReportModalVisible(true)}
+            disabled={reported}
+            className="flex-row items-center justify-center gap-1.5 py-2"
+          >
+            <Ionicons name="flag-outline" size={14} color={colors.slateGray} />
+            <Text className="font-sans-medium text-xs text-slate-gray">
+              {reported ? 'Reported — thanks for letting us know' : 'Report this listing'}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
+
+      <AppModal visible={reportModalVisible} onClose={() => setReportModalVisible(false)} title="Report this listing?">
+        <Text className="font-sans text-sm text-slate-gray">
+          This listing will be hidden from search while our team reviews it.
+        </Text>
+        <View className="flex-row gap-3 pt-2">
+          <View className="flex-1">
+            <Button label="Cancel" variant="secondary" fullWidth onPress={() => setReportModalVisible(false)} />
+          </View>
+          <View className="flex-1">
+            <Button
+              label="Report"
+              variant="primary"
+              fullWidth
+              loading={reportProperty.isPending}
+              onPress={async () => {
+                try {
+                  await reportProperty.mutateAsync(property.id);
+                  setReported(true);
+                } finally {
+                  setReportModalVisible(false);
+                }
+              }}
+            />
+          </View>
+        </View>
+      </AppModal>
     </SafeAreaView>
   );
 }

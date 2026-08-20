@@ -48,12 +48,20 @@ enum UserRole {
   ADMIN
 }
 
+enum SubscriptionTier {
+  FREE
+  PLUS
+  PRO
+  AGENT_PRO
+}
+
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  phone        String   @unique
-  email        String?  @unique
-  role         UserRole @default(BUYER)
+  id               String           @id @default(cuid())
+  name             String
+  phone            String           @unique
+  email            String?          @unique
+  role             UserRole         @default(BUYER)
+  subscriptionTier SubscriptionTier @default(FREE)
 
   agent           Agent?
   ownedProperties Property[]

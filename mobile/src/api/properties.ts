@@ -59,3 +59,7 @@ export function updateProperty(id: string, input: UpdatePropertyInput) {
 export function publishProperty(id: string) {
   return apiRequest<PropertyDetail>(`/properties/${id}/publish`, { method: 'POST' });
 }
+
+export function reportProperty(id: string) {
+  return apiRequest<PropertyDetail>(`/properties/${id}/report`, { method: 'POST' });
+}
