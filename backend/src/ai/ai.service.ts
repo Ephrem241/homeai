@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { LocationsService } from '../locations/locations.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PropertiesService } from '../properties/properties.service';
-import { formatComparablesBlock, formatPropertyBlock } from './property-context';
+import { formatComparablesBlock, formatListingFactsBlock, formatPropertyBlock } from './property-context';
 
 const SearchCriteriaSchema = z.object({
   type: z.enum(['APARTMENT', 'HOUSE', 'LAND', 'COMMERCIAL']).nullable(),
@@ -123,6 +123,28 @@ Keep answers short and conversational — 1-3 sentences unless the user asks for
 Property data:
 ${propertyBlock}`;
 }
+
+const ListingCopySchema = z.object({
+  title: z.string().min(10).max(80),
+  description: z.string().min(40).max(600),
+  tags: z.array(z.string().min(2).max(24)).min(3).max(8),
+});
+
+// CLAUDE.md §4 — "Listing Assistant only rewrites/organizes what the agent
+// entered." No invented amenities, condition claims, or superlatives that
+// aren't backed by a listed fact.
+const LISTING_ASSISTANT_SYSTEM_PROMPT = `You write real estate listing copy for an agent-facing tool. Use ONLY the facts given below — never invent amenities, condition claims ("newly renovated", "spacious", "close to everything"), nearby attractions, or any detail not explicitly listed. If the facts are sparse, write a brief, honest description rather than padding it with invented detail.
+
+title: a clear, factual listing title (type, bedrooms if relevant, neighborhood) — no superlatives that aren't backed by a listed fact.
+description: 2-4 plain sentences organizing the given facts into readable copy.
+tags: 3-8 short single/two-word tags drawn directly from the facts (e.g. type, neighborhood, amenities) — never invented tags.`;
+
+export type ListingCopy = {
+  available: boolean;
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
 
 @Injectable()
 export class AiService {
@@ -293,6 +315,32 @@ export class AiService {
     } catch (error) {
       this.logger.error(`Property chat failed: ${(error as Error).message}`);
       return { reply: "Sorry, I'm having trouble answering right now. Please try again in a moment." };
+    }
+  }
+
+  // Not cached — an agent iterating on a draft may regenerate several times
+  // as they adjust facts, unlike the buyer-facing insight which is
+  // view-only. The agent reviews and can freely edit before it's ever saved.
+  async generateListingCopy(propertyId: string): Promise<ListingCopy> {
+    const property = await this.propertiesService.findOne(propertyId);
+    const prompt = formatListingFactsBlock(property);
+
+    try {
+      const response = await this.client.messages.parse({
+        model: 'claude-opus-5',
+        max_tokens: 1024,
+        output_config: { format: zodOutputFormat(ListingCopySchema), effort: 'medium' },
+        system: LISTING_ASSISTANT_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const parsed = response.parsed_output;
+      if (!parsed) {
+        return { available: false };
+      }
+      return { available: true, ...parsed };
+    } catch (error) {
+      this.logger.error(`Listing copy generation failed: ${(error as Error).message}`);
+      return { available: false };
     }
   }
 }

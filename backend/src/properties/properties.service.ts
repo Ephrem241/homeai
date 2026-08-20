@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { CreatePropertyDto } from './dto/create-property.dto';
 import { QueryPropertiesDto } from './dto/query-properties.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
 
 const LIST_INCLUDE = {
   city: true,
@@ -11,7 +13,13 @@ const LIST_INCLUDE = {
   agent: { select: { businessName: true, verified: true } },
 } satisfies Prisma.PropertyInclude;
 
+const DETAIL_INCLUDE = {
+  ...LIST_INCLUDE,
+  ownerUser: { select: { name: true } },
+} satisfies Prisma.PropertyInclude;
+
 type PropertyWithRelations = Prisma.PropertyGetPayload<{ include: typeof LIST_INCLUDE }>;
+type PropertyWithDetailRelations = Prisma.PropertyGetPayload<{ include: typeof DETAIL_INCLUDE }>;
 
 @Injectable()
 export class PropertiesService {
@@ -146,15 +154,7 @@ export class PropertiesService {
       }));
   }
 
-  async findOne(id: string) {
-    const property = await this.prisma.property.findUnique({
-      where: { id },
-      include: { ...LIST_INCLUDE, ownerUser: { select: { name: true } } },
-    });
-    if (!property) {
-      throw new NotFoundException('Property not found');
-    }
-
+  private toDetailItem(property: PropertyWithDetailRelations) {
     return {
       ...this.toListItem(property),
       description: property.description,
@@ -167,6 +167,93 @@ export class PropertiesService {
         ? { name: property.agent.businessName, verified: property.agent.verified, type: 'agent' as const }
         : { name: property.ownerUser?.name ?? 'Owner', verified: false, type: 'owner' as const },
     };
+  }
+
+  async findOne(id: string) {
+    const property = await this.prisma.property.findUnique({ where: { id }, include: DETAIL_INCLUDE });
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    return this.toDetailItem(property);
+  }
+
+  // Creates the row as soon as the minimum the schema requires is known
+  // (type/purpose/location) — title/description/price start as placeholders
+  // and get filled in by update() as the agent moves through the listing
+  // wizard's remaining steps (CLAUDE.md §5 Phase 5 "save as draft at each
+  // step"). Never publicly visible: status starts DRAFT.
+  async create(dto: CreatePropertyDto) {
+    const property = await this.prisma.property.create({
+      data: {
+        agentId: dto.agentId,
+        type: dto.type,
+        purpose: dto.purpose,
+        countryId: dto.countryId,
+        cityId: dto.cityId,
+        neighborhoodId: dto.neighborhoodId,
+        title: '',
+        description: '',
+        price: 0,
+        currency: dto.currency ?? 'USD',
+        status: 'DRAFT',
+      },
+      include: DETAIL_INCLUDE,
+    });
+    return this.toDetailItem(property);
+  }
+
+  async update(id: string, dto: UpdatePropertyDto) {
+    const existing = await this.prisma.property.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Property not found');
+    }
+
+    const property = await this.prisma.property.update({
+      where: { id },
+      data: {
+        ...(dto.type !== undefined ? { type: dto.type } : {}),
+        ...(dto.purpose !== undefined ? { purpose: dto.purpose } : {}),
+        ...(dto.title !== undefined ? { title: dto.title } : {}),
+        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(dto.price !== undefined ? { price: dto.price } : {}),
+        ...(dto.currency !== undefined ? { currency: dto.currency } : {}),
+        ...(dto.bedrooms !== undefined ? { bedrooms: dto.bedrooms } : {}),
+        ...(dto.bathrooms !== undefined ? { bathrooms: dto.bathrooms } : {}),
+        ...(dto.areaSqm !== undefined ? { areaSqm: dto.areaSqm } : {}),
+        ...(dto.furnished !== undefined ? { furnished: dto.furnished } : {}),
+        ...(dto.parking !== undefined ? { parking: dto.parking } : {}),
+        ...(dto.countryId !== undefined ? { countryId: dto.countryId } : {}),
+        ...(dto.cityId !== undefined ? { cityId: dto.cityId } : {}),
+        ...(dto.neighborhoodId !== undefined ? { neighborhoodId: dto.neighborhoodId } : {}),
+        ...(dto.amenities !== undefined ? { amenities: dto.amenities } : {}),
+        ...(dto.photos !== undefined ? { photos: dto.photos } : {}),
+      },
+      include: DETAIL_INCLUDE,
+    });
+    return this.toDetailItem(property);
+  }
+
+  // Draft -> pending verification (CLAUDE.md §5 Phase 5 "done when" —
+  // publishing never jumps straight to VERIFIED; that's the admin queue
+  // built in Phase 7).
+  async publish(id: string) {
+    const existing = await this.prisma.property.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Property not found');
+    }
+    if (existing.status !== 'DRAFT') {
+      throw new BadRequestException('Only draft listings can be published');
+    }
+    if (!existing.title || !existing.description || existing.price.toNumber() <= 0) {
+      throw new BadRequestException('Complete the listing before publishing');
+    }
+
+    const property = await this.prisma.property.update({
+      where: { id },
+      data: { status: 'PENDING' },
+      include: DETAIL_INCLUDE,
+    });
+    return this.toDetailItem(property);
   }
 
   // Grounding context for the AI insight/score (CLAUDE.md §4 — score every

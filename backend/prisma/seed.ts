@@ -201,10 +201,37 @@ async function seedProperties(
   }
 }
 
+async function seedLeads(agents: { id: string }[], buyer: { id: string }, renter: { id: string }) {
+  const agentZeroProperties = await prisma.property.findMany({
+    where: { agentId: agents[0].id },
+    take: 3,
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const leadSeeds = [
+    { propertyId: agentZeroProperties[0]?.id, userId: buyer.id, status: 'NEW' as const },
+    { propertyId: agentZeroProperties[1]?.id, userId: renter.id, status: 'CONTACTED' as const },
+  ].filter((seed): seed is { propertyId: string; userId: string; status: 'NEW' | 'CONTACTED' } =>
+    Boolean(seed.propertyId),
+  );
+
+  for (const seed of leadSeeds) {
+    const existing = await prisma.lead.findFirst({
+      where: { agentId: agents[0].id, propertyId: seed.propertyId, userId: seed.userId },
+    });
+    if (existing) continue;
+
+    await prisma.lead.create({
+      data: { agentId: agents[0].id, propertyId: seed.propertyId, userId: seed.userId, status: seed.status },
+    });
+  }
+}
+
 async function main() {
   const { ethiopia, addisAbaba, neighborhoods } = await seedLocations();
-  const { agents, owner } = await seedAgentsAndUsers();
+  const { agents, buyer, renter, owner } = await seedAgentsAndUsers();
   await seedProperties(neighborhoods, addisAbaba.id, ethiopia.id, agents, owner.id);
+  await seedLeads(agents, buyer, renter);
 
   console.log('Seed complete.');
 }

@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { ChatMessage, ParsedSearchResult, PropertyInsight } from './types';
+import type { ChatMessage, ListingCopy, ParsedSearchResult, PropertyInsight } from './types';
 
 export function parseSearch(query: string) {
   return apiRequest<ParsedSearchResult>('/ai/parse-search', {
@@ -17,4 +17,8 @@ export function sendChatMessage(propertyId: string, message: string, history: Ch
     method: 'POST',
     body: JSON.stringify({ message, history }),
   });
+}
+
+export function generateListingCopy(propertyId: string) {
+  return apiRequest<ListingCopy>(`/ai/properties/${propertyId}/listing-assistant`, { method: 'POST' });
 }

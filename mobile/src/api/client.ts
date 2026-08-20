@@ -29,6 +29,22 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
   if (!response.ok) {
     console.error(`[api] ${response.status} for ${path}`);
+    // 4xx bodies are our own NestJS validation/business-rule messages (e.g.
+    // "Complete the listing before publishing") — safe to show directly,
+    // unlike 5xx internals which stay behind the generic fallback.
+    if (response.status >= 400 && response.status < 500) {
+      const message = await response
+        .json()
+        .then((body: { message?: unknown }) => {
+          if (typeof body?.message === 'string') return body.message;
+          if (Array.isArray(body?.message)) return body.message.join(' ');
+          return null;
+        })
+        .catch(() => null);
+      if (message) {
+        throw new ApiError(message);
+      }
+    }
     throw new ApiError();
   }
 

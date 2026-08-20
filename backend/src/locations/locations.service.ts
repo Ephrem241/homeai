@@ -26,16 +26,40 @@ export class LocationsService {
       orderBy: { name: 'asc' },
     });
 
-    return locations.map((location) => ({
-      id: location.id,
-      name: location.name,
-      type: location.type,
-      countryCode: location.countryCode,
-      currency: location.currency,
-      breadcrumb: [location.parent?.parent?.name, location.parent?.name]
-        .filter(Boolean)
-        .join(', '),
-    }));
+    return locations.map((location) => {
+      // Resolved ancestor ids — a Property row needs an explicit cityId even
+      // when only a neighborhood was picked (the FK isn't inferrable from
+      // neighborhoodId alone), so callers that create/edit listings need
+      // these, not just the display breadcrumb.
+      let countryId: string | undefined;
+      let cityId: string | undefined;
+      let neighborhoodId: string | undefined;
+
+      if (location.type === 'country') {
+        countryId = location.id;
+      } else if (location.type === 'city') {
+        countryId = location.parent?.id;
+        cityId = location.id;
+      } else {
+        countryId = location.parent?.parent?.id;
+        cityId = location.parent?.id;
+        neighborhoodId = location.id;
+      }
+
+      return {
+        id: location.id,
+        name: location.name,
+        type: location.type,
+        countryCode: location.countryCode,
+        currency: location.currency,
+        breadcrumb: [location.parent?.parent?.name, location.parent?.name]
+          .filter(Boolean)
+          .join(', '),
+        countryId,
+        cityId,
+        neighborhoodId,
+      };
+    });
   }
 
   findOne(id: string) {

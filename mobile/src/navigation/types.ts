@@ -47,8 +47,12 @@ export type AIStackParamList = {
   AI: undefined;
 };
 
+export type ListingCreateParams = { propertyId?: string } | undefined;
+
 export type ProfileStackParamList = {
   Profile: undefined;
+  AgentDashboard: undefined;
+  ListingCreate: ListingCreateParams;
 };
 
 export type RootTabParamList = {

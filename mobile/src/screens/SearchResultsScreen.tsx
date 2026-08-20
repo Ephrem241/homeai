@@ -137,9 +137,9 @@ export default function SearchResultsScreen() {
   function handleSelectLocation(location: LocationSearchResult) {
     setFilters((prev) => ({
       ...prev,
-      countryId: location.type === 'country' ? location.id : undefined,
-      cityId: location.type === 'city' ? location.id : undefined,
-      neighborhoodId: location.type !== 'country' && location.type !== 'city' ? location.id : undefined,
+      countryId: location.countryId,
+      cityId: location.cityId,
+      neighborhoodId: location.neighborhoodId,
       locationLabel: location.name,
     }));
     setLocationPickerVisible(false);

@@ -1,10 +1,12 @@
 import { apiRequest, buildQueryString } from './client';
 import type {
+  CreatePropertyInput,
   PopularLocation,
   PropertyDetail,
   PropertyFilters,
   PropertyListItem,
   PropertyListResponse,
+  UpdatePropertyInput,
 } from './types';
 
 export function fetchProperties(filters: PropertyFilters = {}) {
@@ -38,4 +40,22 @@ export function fetchRecommendedProperties(limit = 10) {
 
 export function fetchPopularLocations(limit = 6) {
   return apiRequest<PopularLocation[]>(`/properties/popular-locations${buildQueryString({ limit })}`);
+}
+
+export function createProperty(input: CreatePropertyInput) {
+  return apiRequest<PropertyDetail>('/properties', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateProperty(id: string, input: UpdatePropertyInput) {
+  return apiRequest<PropertyDetail>(`/properties/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function publishProperty(id: string) {
+  return apiRequest<PropertyDetail>(`/properties/${id}/publish`, { method: 'POST' });
 }

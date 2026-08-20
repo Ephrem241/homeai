@@ -68,6 +68,9 @@ export type LocationSearchResult = {
   countryCode: string | null;
   currency: string | null;
   breadcrumb: string;
+  countryId?: string;
+  cityId?: string;
+  neighborhoodId?: string;
 };
 
 export type FavoriteItem = {
@@ -150,3 +153,74 @@ export type PropertyInsight = {
 };
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
+
+export type ListingCopy = {
+  available: boolean;
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
+
+export type Agent = {
+  id: string;
+  userId: string;
+  businessName: string;
+  verified: boolean;
+  bio: string | null;
+  user: { name: string; phone: string; email: string | null };
+};
+
+export type AgentDashboard = {
+  totalListings: number;
+  byStatus: Record<PropertyStatus, number>;
+  totalLeads: number;
+  recentLeads: {
+    id: string;
+    propertyTitle: string;
+    userName: string;
+    status: 'NEW' | 'CONTACTED' | 'IN_PROGRESS' | 'CLOSED';
+    createdAt: string;
+  }[];
+};
+
+export type AgentListing = {
+  id: string;
+  title: string;
+  status: PropertyStatus;
+  price: number;
+  currency: string;
+  type: PropertyType;
+  purpose: PropertyPurpose;
+  photo: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreatePropertyInput = {
+  agentId: string;
+  type: PropertyType;
+  purpose: PropertyPurpose;
+  countryId: string;
+  cityId: string;
+  neighborhoodId?: string;
+  currency?: string;
+};
+
+export type UpdatePropertyInput = Partial<{
+  type: PropertyType;
+  purpose: PropertyPurpose;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  bedrooms: number;
+  bathrooms: number;
+  areaSqm: number;
+  furnished: boolean;
+  parking: boolean;
+  countryId: string;
+  cityId: string;
+  neighborhoodId: string;
+  amenities: string[];
+  photos: string[];
+}>;

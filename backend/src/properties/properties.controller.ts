@@ -1,6 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 
+import { CreatePropertyDto } from './dto/create-property.dto';
 import { QueryPropertiesDto } from './dto/query-properties.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertiesService } from './properties.service';
 
 @Controller('properties')
@@ -24,8 +26,23 @@ export class PropertiesController {
     return this.propertiesService.findMany(query);
   }
 
+  @Post()
+  create(@Body() dto: CreatePropertyDto) {
+    return this.propertiesService.create(dto);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.propertiesService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdatePropertyDto) {
+    return this.propertiesService.update(id, dto);
+  }
+
+  @Post(':id/publish')
+  publish(@Param('id') id: string) {
+    return this.propertiesService.publish(id);
   }
 }

@@ -22,4 +22,9 @@ export class AiController {
   chat(@Param('id') id: string, @Body() dto: ChatMessageDto) {
     return this.aiService.chatAboutProperty(id, dto.message, dto.history ?? []);
   }
+
+  @Post('properties/:id/listing-assistant')
+  generateListingCopy(@Param('id') id: string) {
+    return this.aiService.generateListingCopy(id);
+  }
 }
