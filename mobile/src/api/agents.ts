@@ -1,8 +1,9 @@
 import { apiRequest } from './client';
 import type { Agent, AgentDashboard, AgentListing } from './types';
 
-export function fetchMyAgent() {
-  return apiRequest<Agent | null>('/agents/me');
+export async function fetchMyAgent() {
+  const { agent } = await apiRequest<{ agent: Agent | null }>('/agents/me');
+  return agent;
 }
 
 export function createAgent(input: { businessName: string; bio?: string }) {

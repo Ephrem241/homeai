@@ -34,11 +34,15 @@ export class ApiError extends Error {
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  // FormData (file uploads) must NOT get an explicit Content-Type — fetch
+  // sets one itself with the correct multipart boundary. Setting it manually
+  // breaks the boundary and the server can't parse the body.
+  const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...init?.headers,
       },

@@ -7,8 +7,9 @@ import { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, Share, Text, View } from 'react-native';
 
 import type { GeneratedDesign } from '../api/types';
-import { Button, FilterChip, HeaderBar, Input, SkeletonBlock } from '../components';
+import { Button, FilterChip, HeaderBar, SkeletonBlock } from '../components';
 import { useGenerateDesign, useSaveDesign } from '../hooks/useDesigns';
+import { usePickAndUploadPhoto } from '../hooks/usePickAndUploadPhoto';
 import type { AIStackParamList, RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
@@ -31,6 +32,7 @@ export default function HomeDesignerScreen() {
   const navigation = useNavigation<HomeDesignerNavigationProp>();
   const generateMutation = useGenerateDesign();
   const saveMutation = useSaveDesign();
+  const photoPicker = usePickAndUploadPhoto();
 
   const [originalImage, setOriginalImage] = useState('');
   const [roomType, setRoomType] = useState<string | undefined>();
@@ -107,19 +109,24 @@ export default function HomeDesignerScreen() {
       <ScrollView contentContainerClassName="gap-6 px-6 py-6">
         <View className="gap-2">
           <SectionLabel>Room photo</SectionLabel>
-          <Input
-            placeholder="https://…"
-            value={originalImage}
-            onChangeText={(text) => {
-              setOriginalImage(text);
-              setResult(null);
-              setSaved(false);
-            }}
-            helperText="Paste a link to your room photo."
-          />
           {originalImage.trim() ? (
             <Image source={{ uri: originalImage.trim() }} className="h-48 w-full rounded-lg bg-mist" resizeMode="cover" />
           ) : null}
+          <Button
+            label={originalImage.trim() ? 'Choose a different photo' : 'Choose a photo'}
+            variant="secondary"
+            leftIcon={<Ionicons name="image-outline" size={16} color={colors.navy} />}
+            loading={photoPicker.isUploading}
+            onPress={async () => {
+              const url = await photoPicker.pickAndUpload();
+              if (url) {
+                setOriginalImage(url);
+                setResult(null);
+                setSaved(false);
+              }
+            }}
+          />
+          {photoPicker.error ? <Text className="font-sans text-xs text-error">{photoPicker.error}</Text> : null}
         </View>
 
         {originalImage.trim() ? (

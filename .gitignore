@@ -22,6 +22,9 @@ mobile/android/
 backend/dist/
 backend/build/
 
+# Local disk storage fallback (backend/src/uploads/local-disk-storage.provider.ts)
+backend/uploads/
+
 # Env files
 .env
 .env.local

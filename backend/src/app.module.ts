@@ -12,6 +12,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MessagesModule } from './messages/messages.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PropertiesModule } from './properties/properties.module';
+import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     AdminModule,
     MessagesModule,
     AuthModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

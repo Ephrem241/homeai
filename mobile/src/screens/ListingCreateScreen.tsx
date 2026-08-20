@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import type { PropertyPurpose, PropertyType, UpdatePropertyInput } from '../api/types';
 import { Button, FilterChip, HeaderBar, Input, LocationPickerSheet, SegmentedTabs, SkeletonBlock } from '../components';
@@ -12,6 +12,7 @@ import {
   usePublishProperty,
   useUpdateProperty,
 } from '../hooks/useListingMutations';
+import { usePickAndUploadPhoto } from '../hooks/usePickAndUploadPhoto';
 import { usePropertyQuery } from '../hooks/useProperties';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
@@ -65,7 +66,6 @@ type WizardState = {
   currency: string;
   amenities: string[];
   photos: string[];
-  photoUrlDraft: string;
   title: string;
   description: string;
   tags: string[];
@@ -81,7 +81,6 @@ const EMPTY_STATE: WizardState = {
   currency: 'USD',
   amenities: [],
   photos: [],
-  photoUrlDraft: '',
   title: '',
   description: '',
   tags: [],
@@ -131,6 +130,7 @@ export default function ListingCreateScreen() {
   const updateMutation = useUpdateProperty();
   const publishMutation = usePublishProperty();
   const generateMutation = useGenerateListingCopy();
+  const photoPicker = usePickAndUploadPhoto();
 
   const [step, setStep] = useState(0);
   const [propertyId, setPropertyId] = useState<string | undefined>(resumeId);
@@ -157,7 +157,6 @@ export default function ListingCreateScreen() {
       currency: existing.data.currency,
       amenities: existing.data.amenities,
       photos: existing.data.photos,
-      photoUrlDraft: '',
       title: existing.data.title,
       description: existing.data.description,
       tags: [],
@@ -402,40 +401,30 @@ export default function ListingCreateScreen() {
       case 7:
         return (
           <View className="gap-3">
-            <Input
-              label="Photo URL"
-              placeholder="https://…"
-              value={state.photoUrlDraft}
-              onChangeText={(t) => update('photoUrlDraft', t)}
-              helperText="Paste a link to a photo. Device upload arrives once a storage bucket is wired up."
-            />
             <Button
               label="Add photo"
               variant="secondary"
-              onPress={() => {
-                const url = state.photoUrlDraft.trim();
-                if (!url) return;
-                update('photos', [...state.photos, url]);
-                update('photoUrlDraft', '');
+              leftIcon={<Ionicons name="image-outline" size={16} color={colors.navy} />}
+              loading={photoPicker.isUploading}
+              onPress={async () => {
+                const url = await photoPicker.pickAndUpload();
+                if (url) update('photos', [...state.photos, url]);
               }}
             />
+            {photoPicker.error ? <Text className="font-sans text-xs text-error">{photoPicker.error}</Text> : null}
             {state.photos.length > 0 ? (
-              <View className="gap-2">
+              <View className="flex-row flex-wrap gap-2">
                 {state.photos.map((url, index) => (
-                  <View
-                    key={`${url}-${index}`}
-                    className="flex-row items-center justify-between rounded-md border border-mist bg-white px-3 py-2"
-                  >
-                    <Text numberOfLines={1} className="flex-1 font-sans text-xs text-slate-gray">
-                      {url}
-                    </Text>
+                  <View key={`${url}-${index}`} className="h-24 w-24 overflow-hidden rounded-md">
+                    <Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" />
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Remove photo"
                       onPress={() => update('photos', state.photos.filter((_, i) => i !== index))}
                       hitSlop={8}
+                      className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-charcoal/70"
                     >
-                      <Ionicons name="close" size={16} color={colors.slateGray} />
+                      <Ionicons name="close" size={14} color={colors.white} />
                     </Pressable>
                   </View>
                 ))}

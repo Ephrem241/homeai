@@ -10,9 +10,13 @@ import { CreateAgentDto } from './dto/create-agent.dto';
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
+  // Wrapped in { agent } rather than returning the bare value — Nest/Express
+  // send an empty body (not the JSON literal "null") for a controller
+  // returning null, which a JSON.parse-based client can't tell apart from
+  // "no body at all" (see mobile's api/client.ts apiRequest).
   @Get('me')
-  getMine(@CurrentUser() user: { id: string }) {
-    return this.agentsService.findByUserId(user.id);
+  async getMine(@CurrentUser() user: { id: string }) {
+    return { agent: await this.agentsService.findByUserId(user.id) };
   }
 
   @Post()
