@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, useWindowDimensions, View } from 'react-native';
 
 import {
   Button,
@@ -71,6 +71,35 @@ export default function SearchResultsScreen() {
   const [unresolvedLocation, setUnresolvedLocation] = useState(route.params?.unresolvedLocation);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  // react-native-web's SafeAreaView doesn't propagate flex:1 through its
+  // inset-padding wrapper, so a flex:1 map view collapses to 0 height there
+  // — compute an explicit height instead. RN's onLayout doesn't fire
+  // reliably through that same broken wrapper on web either (nor does a
+  // ResizeObserver on the header node — its callback silently never fired
+  // in testing), so the header is measured with a direct
+  // getBoundingClientRect() read instead; native keeps using onLayout,
+  // which works fine there since this bug is web-only. useWindowDimensions
+  // is the fallback before either has measured anything (it excludes the
+  // bottom tab bar, so it's an overestimate, but only for the first frame).
+  const { height: windowHeight } = useWindowDimensions();
+  const [screenHeight, setScreenHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const mapHeight = Math.max((screenHeight || windowHeight) - headerHeight, 0);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const measure = () => {
+      const node = document.getElementById('search-results-header');
+      if (node) setHeaderHeight(node.getBoundingClientRect().height);
+    };
+    measure();
+    const timeoutId = setTimeout(measure, 150);
+    window.addEventListener('resize', measure);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', measure);
+    };
+  }, [unresolvedLocation, filters.type]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -193,8 +222,12 @@ export default function SearchResultsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-ivory">
-      <View className="gap-3 px-6 pb-3 pt-4">
+    <SafeAreaView className="flex-1 bg-ivory" onLayout={(e) => setScreenHeight(e.nativeEvent.layout.height)}>
+      <View
+        nativeID="search-results-header"
+        className="gap-3 px-6 pb-3 pt-4"
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+      >
         <SearchBar
           placeholder="Search city, neighborhood, or property"
           value={query}
@@ -256,20 +289,22 @@ export default function SearchResultsScreen() {
 
       {viewMode === 'map' ? (
         MAPBOX_TOKEN ? (
-          <PriceMapView
-            accessToken={MAPBOX_TOKEN}
-            markers={(data?.data ?? [])
-              .filter((property): property is PropertyListItem & { lat: number; lng: number } =>
-                property.lat !== null && property.lng !== null,
-              )
-              .map((property) => ({
-                id: property.id,
-                lat: property.lat,
-                lng: property.lng,
-                label: `${property.currency} ${new Intl.NumberFormat('en-US').format(property.price)}${property.purpose === 'RENT' ? '/mo' : ''}`,
-              }))}
-            onSelectProperty={(id) => navigation.navigate('PropertyDetail', { propertyId: id })}
-          />
+          <View style={{ height: mapHeight || undefined, flex: mapHeight ? undefined : 1 }}>
+            <PriceMapView
+              accessToken={MAPBOX_TOKEN}
+              markers={(data?.data ?? [])
+                .filter((property): property is PropertyListItem & { lat: number; lng: number } =>
+                  property.lat !== null && property.lng !== null,
+                )
+                .map((property) => ({
+                  id: property.id,
+                  lat: property.lat,
+                  lng: property.lng,
+                  label: `${property.currency} ${new Intl.NumberFormat('en-US').format(property.price)}${property.purpose === 'RENT' ? '/mo' : ''}`,
+                }))}
+              onSelectProperty={(id) => navigation.navigate('PropertyDetail', { propertyId: id })}
+            />
+          </View>
         ) : (
           <View className="flex-1 items-center justify-center px-8">
             <View className="h-14 w-14 items-center justify-center rounded-full bg-mist">

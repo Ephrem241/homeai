@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { View } from 'react-native';
 
 import { buildMapHtml, type MapMarker } from './mapHtml';
 
@@ -29,12 +30,18 @@ export default function PriceMapView({
     return () => window.removeEventListener('message', handleMessage);
   }, [onSelectProperty]);
 
+  // Percentage-height chains (height: '100%' up through every ancestor)
+  // don't reliably resolve through react-native-web's flex containers here
+  // — absolute-fill inside a relatively positioned flex-1 View sidesteps
+  // that entirely and reliably fills whatever space the caller gives it.
   return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={html}
-      title="Map"
-      style={{ flex: 1, width: '100%', height: '100%', border: 'none' }}
-    />
+    <View style={{ flex: 1, position: 'relative' }}>
+      <iframe
+        ref={iframeRef}
+        srcDoc={html}
+        title="Map"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', border: 'none' }}
+      />
+    </View>
   );
 }
