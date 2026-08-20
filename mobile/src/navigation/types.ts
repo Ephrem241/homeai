@@ -20,21 +20,27 @@ export type SearchResultsParams =
   | undefined;
 
 export type PropertyDetailParams = { propertyId: string };
+export type PropertyAssistantParams = { propertyId: string };
+export type CompareParams = { propertyIds: string[] };
 
 export type HomeStackParamList = {
   Home: undefined;
   ComponentDemo: undefined;
   PropertyDetail: PropertyDetailParams;
+  PropertyAssistant: PropertyAssistantParams;
 };
 
 export type ExploreStackParamList = {
   Explore: SearchResultsParams;
   PropertyDetail: PropertyDetailParams;
+  PropertyAssistant: PropertyAssistantParams;
+  Compare: CompareParams;
 };
 
 export type SavedStackParamList = {
   Saved: undefined;
   PropertyDetail: PropertyDetailParams;
+  PropertyAssistant: PropertyAssistantParams;
 };
 
 export type AIStackParamList = {

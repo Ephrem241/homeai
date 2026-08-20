@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import {
   Dimensions,
@@ -12,8 +13,9 @@ import {
   View,
 } from 'react-native';
 
-import { EmptyState, PriceBadge, VerificationBadge } from '../components';
+import { Button, EmptyState, InvestmentAnalysisPanel, PriceBadge, PropertyScoreCard, VerificationBadge } from '../components';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
+import { usePropertyInsightQuery } from '../hooks/usePropertyInsight';
 import { usePropertyQuery } from '../hooks/useProperties';
 import type { ExploreStackParamList } from '../navigation/types';
 import { colors } from '../theme/tokens';
@@ -31,10 +33,11 @@ function Spec({ icon, value }: { icon: keyof typeof Ionicons.glyphMap; value: st
 
 export default function PropertyDetailScreen() {
   const route = useRoute<RouteProp<ExploreStackParamList, 'PropertyDetail'>>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<ExploreStackParamList>>();
   const { propertyId } = route.params;
 
   const { data: property, isLoading, isError, refetch } = usePropertyQuery(propertyId);
+  const insight = usePropertyInsightQuery(propertyId);
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
   const [activePhoto, setActivePhoto] = useState(0);
@@ -150,6 +153,13 @@ export default function PropertyDetailScreen() {
             <Spec icon="resize-outline" value={`${property.areaSqm ?? 0} m²`} />
           </View>
 
+          <Button
+            label="Ask AI about this property"
+            variant="secondary"
+            leftIcon={<Ionicons name="sparkles" size={16} color={colors.navy} />}
+            onPress={() => navigation.navigate('PropertyAssistant', { propertyId: property.id })}
+          />
+
           <View className="gap-2">
             <Text className="font-sans-semibold text-lg text-charcoal">About this property</Text>
             <Text className="font-sans text-base leading-6 text-slate-gray">{property.description}</Text>
@@ -167,6 +177,10 @@ export default function PropertyDetailScreen() {
               </View>
             </View>
           ) : null}
+
+          <PropertyScoreCard insight={insight.data} isLoading={insight.isLoading} />
+
+          <InvestmentAnalysisPanel insight={insight.data} isLoading={insight.isLoading} />
 
           <View className="gap-2">
             <Text className="font-sans-semibold text-lg text-charcoal">Location</Text>

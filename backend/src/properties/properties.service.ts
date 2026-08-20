@@ -168,4 +168,41 @@ export class PropertiesService {
         : { name: property.ownerUser?.name ?? 'Owner', verified: false, type: 'owner' as const },
     };
   }
+
+  // Grounding context for the AI insight/score (CLAUDE.md §4 — score every
+  // dimension against real data, not vibes). Same type/purpose/city as the
+  // subject property so price and space comparisons are meaningful.
+  async findComparables(
+    property: { id: string; type: Prisma.PropertyWhereInput['type']; purpose: Prisma.PropertyWhereInput['purpose']; cityId: string },
+    limit = 5,
+  ) {
+    const comparables = await this.prisma.property.findMany({
+      where: {
+        id: { not: property.id },
+        status: 'VERIFIED',
+        type: property.type,
+        purpose: property.purpose,
+        cityId: property.cityId,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        title: true,
+        price: true,
+        currency: true,
+        areaSqm: true,
+        bedrooms: true,
+        neighborhood: { select: { name: true } },
+      },
+    });
+
+    return comparables.map((c) => ({
+      title: c.title,
+      price: c.price.toNumber(),
+      currency: c.currency,
+      areaSqm: c.areaSqm,
+      bedrooms: c.bedrooms,
+      neighborhood: c.neighborhood?.name ?? null,
+    }));
+  }
 }

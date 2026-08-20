@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import ComponentDemoScreen from '../screens/ComponentDemoScreen';
 import HomeScreen from '../screens/HomeScreen';
+import PropertyAssistantScreen from '../screens/PropertyAssistantScreen';
 import PropertyDetailScreen from '../screens/PropertyDetailScreen';
 import type { HomeStackParamList } from './types';
 
@@ -13,6 +14,7 @@ export default function HomeStack() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ComponentDemo" component={ComponentDemoScreen} />
       <Stack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+      <Stack.Screen name="PropertyAssistant" component={PropertyAssistantScreen} />
     </Stack.Navigator>
   );
 }

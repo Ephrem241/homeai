@@ -130,3 +130,23 @@ export type ParsedSearchResult = {
   locationLabel?: string;
   unresolvedLocation?: string;
 };
+
+export type PropertyInsight = {
+  available: boolean;
+  score?: number;
+  confidence?: number;
+  breakdown?: {
+    location: number;
+    price: number;
+    space: number;
+    amenities: number;
+    condition: number;
+    investment: number;
+  };
+  highlights?: string[];
+  investmentCategory?: 'STRONG' | 'MODERATE' | 'NEEDS_REVIEW';
+  investmentSummary?: string;
+  generatedAt?: string;
+};
+
+export type ChatMessage = { role: 'user' | 'assistant'; content: string };

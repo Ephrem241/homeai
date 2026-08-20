@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
 import { AiService } from './ai.service';
+import { ChatMessageDto } from './dto/chat-message.dto';
 import { ParseSearchDto } from './dto/parse-search.dto';
 
 @Controller('ai')
@@ -10,5 +11,15 @@ export class AiController {
   @Post('parse-search')
   parseSearch(@Body() dto: ParseSearchDto) {
     return this.aiService.parseSearch(dto.query);
+  }
+
+  @Get('properties/:id/insight')
+  getInsight(@Param('id') id: string) {
+    return this.aiService.getPropertyInsight(id);
+  }
+
+  @Post('properties/:id/chat')
+  chat(@Param('id') id: string, @Body() dto: ChatMessageDto) {
+    return this.aiService.chatAboutProperty(id, dto.message, dto.history ?? []);
   }
 }

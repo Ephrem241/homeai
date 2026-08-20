@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import PropertyAssistantScreen from '../screens/PropertyAssistantScreen';
 import PropertyDetailScreen from '../screens/PropertyDetailScreen';
 import SavedScreen from '../screens/SavedScreen';
 import type { SavedStackParamList } from './types';
@@ -11,6 +12,7 @@ export default function SavedStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Saved" component={SavedScreen} />
       <Stack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+      <Stack.Screen name="PropertyAssistant" component={PropertyAssistantScreen} />
     </Stack.Navigator>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, View } from 'react-native';
 
 import {
+  Button,
   EmptyState,
   FilterChip,
   FiltersSheet,
@@ -65,6 +66,8 @@ export default function SearchResultsScreen() {
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!route.params) return;
@@ -114,6 +117,23 @@ export default function SearchResultsScreen() {
     setUnresolvedLocation(undefined);
   }
 
+  function toggleCompareMode() {
+    setCompareMode((prev) => !prev);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < 4) {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   function handleSelectLocation(location: LocationSearchResult) {
     setFilters((prev) => ({
       ...prev,
@@ -127,23 +147,39 @@ export default function SearchResultsScreen() {
   }
 
   function renderItem({ item }: { item: PropertyListItem }) {
+    const selected = selectedIds.has(item.id);
     return (
       <View className="px-6 pb-4">
-        <PropertyCard
-          title={item.title}
-          location={item.neighborhood ? `${item.neighborhood}, ${item.city}` : item.city}
-          price={item.price}
-          currency={item.currency}
-          period={item.purpose === 'RENT' ? 'mo' : undefined}
-          bedrooms={item.bedrooms ?? 0}
-          bathrooms={item.bathrooms ?? 0}
-          areaSqm={item.areaSqm ?? 0}
-          imageUrl={item.photo}
-          verificationStatus="verified"
-          favorited={favoritedIds.has(item.id)}
-          onPress={() => navigation.navigate('PropertyDetail', { propertyId: item.id })}
-          onPressFavorite={() => toggleFavorite.mutate(item.id)}
-        />
+        <View className={compareMode && selected ? 'rounded-lg border-2 border-navy' : ''}>
+          <PropertyCard
+            title={item.title}
+            location={item.neighborhood ? `${item.neighborhood}, ${item.city}` : item.city}
+            price={item.price}
+            currency={item.currency}
+            period={item.purpose === 'RENT' ? 'mo' : undefined}
+            bedrooms={item.bedrooms ?? 0}
+            bathrooms={item.bathrooms ?? 0}
+            areaSqm={item.areaSqm ?? 0}
+            imageUrl={item.photo}
+            verificationStatus="verified"
+            favorited={favoritedIds.has(item.id)}
+            onPress={() =>
+              compareMode
+                ? toggleSelected(item.id)
+                : navigation.navigate('PropertyDetail', { propertyId: item.id })
+            }
+            onPressFavorite={() => toggleFavorite.mutate(item.id)}
+          />
+        </View>
+        {compareMode ? (
+          <View className="absolute right-9 top-3 h-7 w-7 items-center justify-center rounded-full bg-white/90">
+            <Ionicons
+              name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+              size={20}
+              color={selected ? colors.navy : colors.slateGray}
+            />
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -186,14 +222,23 @@ export default function SearchResultsScreen() {
           ))}
         </View>
 
-        <SegmentedTabs
-          options={[
-            { label: 'List', value: 'list' },
-            { label: 'Map', value: 'map' },
-          ]}
-          value={viewMode}
-          onChange={(next) => setViewMode(next as 'list' | 'map')}
-        />
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1">
+            <SegmentedTabs
+              options={[
+                { label: 'List', value: 'list' },
+                { label: 'Map', value: 'map' },
+              ]}
+              value={viewMode}
+              onChange={(next) => setViewMode(next as 'list' | 'map')}
+            />
+          </View>
+          <Pressable accessibilityRole="button" onPress={toggleCompareMode} hitSlop={8}>
+            <Text className={`font-sans-medium text-sm ${compareMode ? 'text-error' : 'text-navy'}`}>
+              {compareMode ? 'Cancel' : 'Compare'}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {viewMode === 'map' ? (
@@ -247,6 +292,23 @@ export default function SearchResultsScreen() {
           onAction={hasActiveFilters || query ? clearAll : undefined}
         />
       )}
+
+      {compareMode && selectedIds.size > 0 ? (
+        <View className="gap-2 border-t border-mist bg-white px-6 py-3">
+          <Text className="font-sans text-xs text-slate-gray">
+            {selectedIds.size < 2
+              ? 'Select at least 2 properties to compare (up to 4).'
+              : `${selectedIds.size} selected`}
+          </Text>
+          <Button
+            label={`Compare (${selectedIds.size})`}
+            variant="primary"
+            fullWidth
+            disabled={selectedIds.size < 2}
+            onPress={() => navigation.navigate('Compare', { propertyIds: Array.from(selectedIds) })}
+          />
+        </View>
+      ) : null}
 
       <FiltersSheet
         visible={filtersVisible}
