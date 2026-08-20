@@ -17,6 +17,8 @@ export type FiltersValue = {
   maxPrice?: string;
   bedrooms?: number;
   currency?: string;
+  furnished?: boolean;
+  parking?: boolean;
 };
 
 const TYPE_OPTIONS: { label: string; value: PropertyType; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -153,6 +155,22 @@ export default function FiltersSheet({
                 onPress={() => setDraft((d) => ({ ...d, bedrooms: option.value || undefined }))}
               />
             ))}
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <FieldLabel>Amenities</FieldLabel>
+          <View className="flex-row flex-wrap gap-2">
+            <FilterChip
+              label="Furnished"
+              selected={Boolean(draft.furnished)}
+              onPress={() => setDraft((d) => ({ ...d, furnished: d.furnished ? undefined : true }))}
+            />
+            <FilterChip
+              label="Parking"
+              selected={Boolean(draft.parking)}
+              onPress={() => setDraft((d) => ({ ...d, parking: d.parking ? undefined : true }))}
+            />
           </View>
         </View>
       </ScrollView>

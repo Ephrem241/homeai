@@ -3,10 +3,12 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import {
+  AiSearchReviewSheet,
   Button,
   LocationCard,
   LocationCardSkeleton,
@@ -14,8 +16,11 @@ import {
   PropertyCardSkeleton,
   SearchBar,
 } from '../components';
+import type { AiSearchDraft } from '../components';
+import type { ParsedSearchResult } from '../api/types';
 import { usePopularLocationsQuery, useRecommendedPropertiesQuery } from '../hooks/useProperties';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
+import { useParseSearch } from '../hooks/useParseSearch';
 import type { HomeStackParamList, RootTabParamList, SearchResultsParams } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
@@ -44,9 +49,42 @@ export default function HomeScreen() {
   const popularLocations = usePopularLocationsQuery(6);
   const favoritedIds = useFavoritedIds();
   const toggleFavorite = useToggleFavorite();
+  const parseSearch = useParseSearch();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [reviewResult, setReviewResult] = useState<ParsedSearchResult | null>(null);
+  const [reviewVisible, setReviewVisible] = useState(false);
 
   function goToExplore(params?: SearchResultsParams) {
     navigation.navigate('ExploreTab', { screen: 'Explore', params });
+  }
+
+  async function handleSearchSubmit() {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      goToExplore();
+      return;
+    }
+
+    try {
+      const result = await parseSearch.mutateAsync(trimmed);
+      setReviewResult(result);
+    } catch {
+      // AI parsing failed — the review sheet's "couldn't pick out any
+      // details" path doubles as the plain-language fallback here too.
+      setReviewResult({ understood: false });
+    }
+    setReviewVisible(true);
+  }
+
+  function handleReviewConfirm(draft: AiSearchDraft, fallbackToText: boolean) {
+    setReviewVisible(false);
+    if (fallbackToText) {
+      goToExplore({ q: searchQuery.trim() });
+    } else {
+      goToExplore(draft);
+    }
+    setSearchQuery('');
   }
 
   return (
@@ -57,11 +95,23 @@ export default function HomeScreen() {
           <Text className="font-sans text-base text-slate-gray">{t('common.tagline')}</Text>
         </View>
 
-        <Pressable accessibilityRole="button" onPress={() => goToExplore()} className="px-6">
-          <View pointerEvents="none">
-            <SearchBar placeholder={t('home.searchPlaceholder')} value="" editable={false} />
-          </View>
-        </Pressable>
+        <View className="gap-2 px-6">
+          <SearchBar
+            placeholder={t('home.searchPlaceholder')}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearchSubmit}
+            onSearchPress={handleSearchSubmit}
+            returnKeyType="search"
+            editable={!parseSearch.isPending}
+          />
+          {parseSearch.isPending ? (
+            <View className="flex-row items-center gap-2 px-1">
+              <ActivityIndicator size="small" color={colors.navy} />
+              <Text className="font-sans text-xs text-slate-gray">Understanding your search…</Text>
+            </View>
+          ) : null}
+        </View>
 
         <View className="flex-row justify-between px-6">
           {QUICK_ACTIONS.map((action) => (
@@ -142,6 +192,14 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
+
+      <AiSearchReviewSheet
+        visible={reviewVisible}
+        onClose={() => setReviewVisible(false)}
+        query={searchQuery.trim()}
+        result={reviewResult}
+        onConfirm={handleReviewConfirm}
+      />
     </SafeAreaView>
   );
 }

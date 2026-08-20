@@ -5,9 +5,17 @@ export type SearchResultsParams =
       purpose?: PropertyPurpose;
       type?: PropertyType;
       q?: string;
+      countryId?: string;
       cityId?: string;
       neighborhoodId?: string;
       locationLabel?: string;
+      bedrooms?: number;
+      minPrice?: number;
+      maxPrice?: number;
+      currency?: string;
+      furnished?: boolean;
+      parking?: boolean;
+      unresolvedLocation?: string;
     }
   | undefined;
 

@@ -113,3 +113,20 @@ export type PropertyFilters = {
   limit?: number;
   sort?: 'newest' | 'price_asc' | 'price_desc';
 };
+
+export type ParsedSearchResult = {
+  understood: boolean;
+  type?: PropertyType;
+  purpose?: PropertyPurpose;
+  bedrooms?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  currency?: string;
+  furnished?: boolean;
+  parking?: boolean;
+  countryId?: string;
+  cityId?: string;
+  neighborhoodId?: string;
+  locationLabel?: string;
+  unresolvedLocation?: string;
+};

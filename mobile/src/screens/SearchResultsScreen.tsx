@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, SafeAreaView, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, View } from 'react-native';
 
 import {
   EmptyState,
@@ -18,7 +18,7 @@ import type { FiltersValue } from '../components/FiltersSheet';
 import type { LocationSearchResult, PropertyFilters, PropertyListItem, PropertyType } from '../api/types';
 import { useFavoritedIds, useToggleFavorite } from '../hooks/useFavorites';
 import { usePropertiesQuery } from '../hooks/useProperties';
-import type { ExploreStackParamList } from '../navigation/types';
+import type { ExploreStackParamList, SearchResultsParams } from '../navigation/types';
 import { colors } from '../theme/tokens';
 
 const QUICK_TYPES: { label: string; value: PropertyType; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -35,18 +35,33 @@ type ActiveFilters = FiltersValue & {
   locationLabel?: string;
 };
 
+// Route params carry numeric min/max price (from AI parsing or a quick
+// action); FiltersSheet edits them as text-input strings. Convert once here
+// so both entry points land in the same shape.
+function paramsToFilters(params: SearchResultsParams): ActiveFilters {
+  return {
+    purpose: params?.purpose,
+    type: params?.type,
+    countryId: params?.countryId,
+    cityId: params?.cityId,
+    neighborhoodId: params?.neighborhoodId,
+    locationLabel: params?.locationLabel,
+    bedrooms: params?.bedrooms,
+    minPrice: params?.minPrice !== undefined ? String(params.minPrice) : undefined,
+    maxPrice: params?.maxPrice !== undefined ? String(params.maxPrice) : undefined,
+    currency: params?.currency,
+    furnished: params?.furnished,
+    parking: params?.parking,
+  };
+}
+
 export default function SearchResultsScreen() {
   const route = useRoute<RouteProp<ExploreStackParamList, 'Explore'>>();
   const navigation = useNavigation<NativeStackNavigationProp<ExploreStackParamList>>();
 
   const [query, setQuery] = useState(route.params?.q ?? '');
-  const [filters, setFilters] = useState<ActiveFilters>({
-    purpose: route.params?.purpose,
-    type: route.params?.type,
-    cityId: route.params?.cityId,
-    neighborhoodId: route.params?.neighborhoodId,
-    locationLabel: route.params?.locationLabel,
-  });
+  const [filters, setFilters] = useState<ActiveFilters>(paramsToFilters(route.params));
+  const [unresolvedLocation, setUnresolvedLocation] = useState(route.params?.unresolvedLocation);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -54,25 +69,23 @@ export default function SearchResultsScreen() {
   useEffect(() => {
     if (!route.params) return;
     setQuery(route.params.q ?? '');
-    setFilters({
-      purpose: route.params.purpose,
-      type: route.params.type,
-      cityId: route.params.cityId,
-      neighborhoodId: route.params.neighborhoodId,
-      locationLabel: route.params.locationLabel,
-    });
+    setFilters(paramsToFilters(route.params));
+    setUnresolvedLocation(route.params.unresolvedLocation);
   }, [route.params]);
 
   const queryFilters: PropertyFilters = {
     q: query.trim() || undefined,
     purpose: filters.purpose,
     type: filters.type,
+    countryId: filters.countryId,
     cityId: filters.cityId,
     neighborhoodId: filters.neighborhoodId,
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
     currency: filters.currency,
     bedrooms: filters.bedrooms,
+    furnished: filters.furnished,
+    parking: filters.parking,
     limit: 50,
     sort: 'newest',
   };
@@ -84,17 +97,21 @@ export default function SearchResultsScreen() {
   const hasActiveFilters = Boolean(
     filters.type ||
       filters.purpose ||
+      filters.countryId ||
       filters.cityId ||
       filters.neighborhoodId ||
       filters.minPrice ||
       filters.maxPrice ||
       filters.currency ||
-      filters.bedrooms,
+      filters.bedrooms ||
+      filters.furnished ||
+      filters.parking,
   );
 
   function clearAll() {
     setQuery('');
     setFilters({});
+    setUnresolvedLocation(undefined);
   }
 
   function handleSelectLocation(location: LocationSearchResult) {
@@ -140,6 +157,17 @@ export default function SearchResultsScreen() {
           onChangeText={setQuery}
           onFilterPress={() => setFiltersVisible(true)}
         />
+
+        {unresolvedLocation ? (
+          <View className="flex-row items-center justify-between rounded-md bg-mist px-4 py-2.5">
+            <Text className="flex-1 font-sans text-xs text-slate-gray">
+              We couldn't match a location for "{unresolvedLocation}" — showing everything else.
+            </Text>
+            <Pressable accessibilityRole="button" onPress={() => setUnresolvedLocation(undefined)} hitSlop={8}>
+              <Ionicons name="close" size={16} color={colors.slateGray} />
+            </Pressable>
+          </View>
+        ) : null}
 
         <View className="flex-row flex-wrap gap-2">
           {QUICK_TYPES.map((option) => (

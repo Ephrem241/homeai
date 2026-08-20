@@ -8,7 +8,13 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor() {
-    super({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+    super({
+      // Conservative pool size — Supabase's session pooler (used here so
+      // Prisma's prepared statements work, unlike the transaction-mode
+      // pooler) caps concurrent sessions fairly low on free/dev tiers, so we
+      // deliberately don't try to hold more connections than that.
+      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL, max: 5 }),
+    });
   }
 
   async onModuleDestroy() {

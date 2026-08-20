@@ -86,16 +86,22 @@ export class PropertiesService {
           ? { price: 'desc' }
           : { createdAt: 'desc' };
 
-    const [total, properties] = await this.prisma.$transaction([
-      this.prisma.property.count({ where }),
-      this.prisma.property.findMany({
-        where,
-        include: LIST_INCLUDE,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
+    const [total, properties] = await this.prisma.$transaction(
+      [
+        this.prisma.property.count({ where }),
+        this.prisma.property.findMany({
+          where,
+          include: LIST_INCLUDE,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ],
+      // A busy pooled connection (Supabase session pooler, small pool) can
+      // occasionally take longer than Prisma's 5s default to free up — this
+      // is a plain read, so waiting a bit longer beats failing the request.
+      { maxWait: 10000, timeout: 15000 },
+    );
 
     return {
       data: properties.map((property) => this.toListItem(property)),
