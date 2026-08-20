@@ -27,7 +27,9 @@ export default function LocationCard({
         <Text numberOfLines={1} className="font-sans-semibold text-sm text-charcoal">
           {name}
         </Text>
-        <Text className="font-sans text-xs text-slate-gray">{propertyCount} properties</Text>
+        <Text className="font-sans text-xs text-slate-gray">
+          {propertyCount} {propertyCount === 1 ? 'property' : 'properties'}
+        </Text>
       </View>
     </Pressable>
   );

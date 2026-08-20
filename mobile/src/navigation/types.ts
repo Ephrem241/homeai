@@ -1,14 +1,32 @@
+import type { PropertyPurpose, PropertyType } from '../api/types';
+
+export type SearchResultsParams =
+  | {
+      purpose?: PropertyPurpose;
+      type?: PropertyType;
+      q?: string;
+      cityId?: string;
+      neighborhoodId?: string;
+      locationLabel?: string;
+    }
+  | undefined;
+
+export type PropertyDetailParams = { propertyId: string };
+
 export type HomeStackParamList = {
   Home: undefined;
   ComponentDemo: undefined;
+  PropertyDetail: PropertyDetailParams;
 };
 
 export type ExploreStackParamList = {
-  Explore: undefined;
+  Explore: SearchResultsParams;
+  PropertyDetail: PropertyDetailParams;
 };
 
 export type SavedStackParamList = {
   Saved: undefined;
+  PropertyDetail: PropertyDetailParams;
 };
 
 export type AIStackParamList = {
@@ -21,7 +39,7 @@ export type ProfileStackParamList = {
 
 export type RootTabParamList = {
   HomeTab: undefined;
-  ExploreTab: undefined;
+  ExploreTab: { screen: 'Explore'; params: SearchResultsParams } | undefined;
   SavedTab: undefined;
   AITab: undefined;
   ProfileTab: undefined;

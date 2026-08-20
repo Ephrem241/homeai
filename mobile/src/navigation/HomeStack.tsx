@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import ComponentDemoScreen from '../screens/ComponentDemoScreen';
 import HomeScreen from '../screens/HomeScreen';
+import PropertyDetailScreen from '../screens/PropertyDetailScreen';
 import type { HomeStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -11,6 +12,7 @@ export default function HomeStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ComponentDemo" component={ComponentDemoScreen} />
+      <Stack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
     </Stack.Navigator>
   );
 }

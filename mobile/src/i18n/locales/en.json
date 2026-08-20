@@ -11,11 +11,10 @@
     "profile": "Profile"
   },
   "home": {
-    "title": "Design system online",
-    "subtitle": "Phase 0 scaffold — tokens, navigation, and i18n are wired up.",
-    "tokensHeading": "Color tokens",
-    "radiiHeading": "Radii",
-    "typeHeading": "Type",
+    "searchPlaceholder": "Search city, neighborhood, or property",
+    "recommended": "Recommended for you",
+    "popularLocations": "Popular locations",
+    "seeAll": "See all",
     "componentLibraryCta": "View component library"
   },
   "placeholder": {

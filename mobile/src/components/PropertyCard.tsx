@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 
 import { colors } from '../theme/tokens';
 import PriceBadge from './PriceBadge';
@@ -15,6 +15,7 @@ export type PropertyCardProps = {
   bedrooms: number;
   bathrooms: number;
   areaSqm: number;
+  imageUrl?: string | null;
   verificationStatus?: VerificationStatus;
   favorited?: boolean;
   onPress?: () => void;
@@ -39,6 +40,7 @@ export default function PropertyCard({
   bedrooms,
   bathrooms,
   areaSqm,
+  imageUrl,
   verificationStatus,
   favorited = false,
   onPress,
@@ -52,7 +54,11 @@ export default function PropertyCard({
       style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
     >
       <View className="h-40 items-center justify-center bg-mist">
-        <Ionicons name="image-outline" size={32} color={colors.slateGray} />
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} className="h-40 w-full" resizeMode="cover" />
+        ) : (
+          <Ionicons name="image-outline" size={32} color={colors.slateGray} />
+        )}
 
         {verificationStatus ? (
           <View className="absolute left-3 top-3">
@@ -61,7 +67,11 @@ export default function PropertyCard({
         ) : null}
 
         <Pressable
-          accessibilityRole="button"
+          // No accessibilityRole="button" here — the card itself is already
+          // a button (see below), and react-native-web renders that role as
+          // a literal <button> element; nesting a second one is invalid HTML
+          // and breaks hydration. accessibilityLabel still identifies this
+          // as a control to screen readers.
           accessibilityLabel={favorited ? 'Remove from favorites' : 'Add to favorites'}
           onPress={onPressFavorite}
           hitSlop={8}
